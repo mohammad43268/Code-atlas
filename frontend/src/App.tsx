@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { LandingPage } from './components/LandingPage';
-import { Scene3D } from './scene/Scene3D';
-import './App.css'; // Will be essentially empty
+import { ChatPanel } from './components/ChatPanel';
+import './index.css'; 
 
-type ViewState = 'landing' | 'scene';
+type ViewState = 'landing' | 'chat';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('landing');
@@ -11,10 +11,10 @@ function App() {
   return (
     <>
       {currentView === 'landing' && (
-        <LandingPage onExplore={() => setCurrentView('scene')} />
+        <LandingPage onExplore={() => setCurrentView('chat')} />
       )}
-      {currentView === 'scene' && (
-        <Scene3D onBack={() => setCurrentView('landing')} />
+      {currentView === 'chat' && (
+        <ChatPanel />
       )}
     </>
   );
