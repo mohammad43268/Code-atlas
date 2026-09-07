@@ -113,7 +113,8 @@ export const ChatPanel: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const res = await fetch('http://localhost:8080/ask', {
+      const apiUrl = import.meta.env.PROD ? '/api/ask' : 'http://localhost:8080/ask';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
