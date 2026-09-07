@@ -18,7 +18,7 @@ app.use(express.json());
 
 app.post(["/ask", "/api/ask"], async (req, res) => {
     try {
-        const { question, fileContent, fileName } = req.body;
+        const { question, fileContent, fileName, model } = req.body;
 
         if (!question) {
             return res.status(400).json({ error: "Question is required." });
@@ -35,7 +35,7 @@ Always format your responses using clean Markdown. Use code blocks with language
 Keep your answers highly accurate, concise, and professional.`;
 
         const response = await client.chat.completions.create({
-            model: "gpt-oss:120b", 
+            model: model || "gpt-oss:120b", 
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: finalPrompt }

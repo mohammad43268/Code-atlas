@@ -23,6 +23,7 @@ export const ChatPanel: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [chatWidth, setChatWidth] = useState(40);
+  const [selectedModel, setSelectedModel] = useState('gpt-oss:120b');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,7 +121,8 @@ export const ChatPanel: React.FC = () => {
         body: JSON.stringify({ 
           question: userText,
           fileName: filePayload?.name,
-          fileContent: filePayload?.content
+          fileContent: filePayload?.content,
+          model: selectedModel
         })
       });
       
@@ -206,10 +208,31 @@ export const ChatPanel: React.FC = () => {
           borderBottom: '1px solid #1a1a1a',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center'
         }}>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <h2 style={{ fontSize: '0.95rem', margin: 0, fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#e5e5e5' }}>Workspace</h2>
           </div>
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              style={{
+                backgroundColor: '#111',
+                color: '#a3a3a3',
+                border: '1px solid #222',
+                borderRadius: '6px',
+                padding: '4px 8px',
+                fontSize: '0.75rem',
+                fontFamily: "'JetBrains Mono', monospace",
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="gpt-oss:120b">gpt-oss:120b</option>
+              <option value="nemotron-3-ultra:cloud">nemotron-3-ultra:cloud</option>
+              <option value="qwen-3.8b:edge">qwen-3.8b:edge</option>
+            </select>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></div>
+          </div>
         </div>
         
         <div ref={messagesContainerRef} style={{
