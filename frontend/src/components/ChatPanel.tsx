@@ -213,30 +213,71 @@ export const ChatPanel: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 200px' }}>
             <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, fontFamily: 'Inter, sans-serif', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workspace Control</h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0, position: 'relative' }}>
+            <div 
+              onClick={() => {
+                const el = document.getElementById('custom-dropdown');
+                if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+              }}
               style={{
                 backgroundColor: 'var(--bg)',
                 color: 'var(--ink)',
                 border: '1px solid var(--ink)',
-                borderRadius: '0px',
-                padding: '6px 12px',
+                padding: '8px 16px',
                 fontSize: '0.85rem',
                 fontFamily: "'JetBrains Mono', monospace",
-                outline: 'none',
                 cursor: 'pointer',
                 fontWeight: 600,
-                maxWidth: '200px',
-                textOverflow: 'ellipsis'
+                minWidth: '220px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: '4px 4px 0px var(--ink)'
               }}
             >
-              <option value="gpt-oss:120b">gpt-oss:120b</option>
-              <option value="nemotron-3-ultra:cloud">nemotron-3-ultra:cloud</option>
-              <option value="qwen-3.8b:edge">qwen-3.8b:edge</option>
-            </select>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'pulse 2s infinite', flexShrink: 0 }}></div>
+              <span>{selectedModel}</span>
+              <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.75rem' }}></i>
+            </div>
+            
+            <div id="custom-dropdown" style={{
+              display: 'none',
+              position: 'absolute',
+              top: '100%',
+              left: '0',
+              width: '100%',
+              marginTop: '8px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--ink)',
+              boxShadow: '4px 4px 0px var(--ink)',
+              zIndex: 100,
+              display: 'none' // managed via inline script / state in React
+            }}>
+              {['gpt-oss:120b', 'nemotron-3-ultra:cloud', 'qwen-3.8b:edge'].map((m) => (
+                <div
+                  key={m}
+                  onClick={(e) => {
+                    setSelectedModel(m);
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) parent.style.display = 'none';
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--muted)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--surface)'}
+                  style={{
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    borderBottom: '1px solid rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {m}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'pulse 2s infinite', flexShrink: 0, marginLeft: '8px' }}></div>
           </div>
         </div>
         
