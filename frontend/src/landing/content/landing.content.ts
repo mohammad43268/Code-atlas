@@ -12,17 +12,20 @@ export const content = {
     {
       title: "3D explorer",
       desc: "See the structure of a repository as a space you move through.",
-      status: "in progress"
+      status: "in progress",
+      img: "/feature1.jpg"
     },
     {
       title: "Grounded AI chat",
       desc: "Answers that point back to the files they came from.",
-      status: "in progress"
+      status: "in progress",
+      img: "/feature2.jpg"
     },
     {
       title: "Live collaboration",
       desc: "Explore the same world together, in real time.",
-      status: "in progress"
+      status: "in progress",
+      img: "/feature3.jpg"
     }
   ],
   underTheHood: {

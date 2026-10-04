@@ -316,10 +316,11 @@ export const WaterCanvas: React.FC = () => {
     <div 
       aria-hidden="true" 
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         zIndex: 0,
-        touchAction: 'pan-y'
+        touchAction: 'pan-y',
+        pointerEvents: 'none'
       }}
     >
       <Canvas

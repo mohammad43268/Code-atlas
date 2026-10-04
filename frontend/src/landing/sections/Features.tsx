@@ -79,7 +79,23 @@ export const Features: React.FC = () => {
                 gridRow: 1,
                 willChange: 'transform, opacity'
               }}>
-                <div className={styles.featureFrame} />
+                <div className={styles.featureFrame} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  {feature.img && (
+                    <img 
+                      src={feature.img} 
+                      alt={feature.title} 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover', 
+                        opacity: 0.9, 
+                        transition: 'transform 0.5s ease',
+                      }} 
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           );

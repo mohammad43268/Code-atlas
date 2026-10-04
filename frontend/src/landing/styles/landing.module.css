@@ -2,7 +2,7 @@
   padding: clamp(96px, 14vw, 200px) clamp(16px, 4vw, 24px);
   width: 100%;
   box-sizing: border-box;
-  background-color: var(--bg);
+  background-color: transparent;
   color: var(--ink);
   position: relative;
 }
@@ -67,7 +67,6 @@
   aspect-ratio: 16 / 10;
   background-color: var(--surface);
   border: 1px solid var(--muted);
-  opacity: 0.5;
   border-radius: 4px;
 }
 

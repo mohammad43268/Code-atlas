@@ -61,7 +61,7 @@ export const LandingPage: React.FC = () => {
       style={{
         width: '100%',
         height: '100svh',
-        backgroundColor: 'var(--bg)',
+        backgroundColor: 'transparent',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',

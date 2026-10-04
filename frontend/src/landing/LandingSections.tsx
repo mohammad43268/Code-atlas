@@ -43,7 +43,7 @@ export const LandingSections: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ position: 'relative', zIndex: 10, background: 'var(--bg)' }}>
+    <div style={{ position: 'relative', zIndex: 10, background: 'transparent' }}>
       <DataFlow />
       <Statement />
       <HowItWorks />
