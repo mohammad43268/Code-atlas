@@ -4,9 +4,18 @@ export const content = {
     support: "CodeAtlas turns a GitHub repository into a 3D world you can explore."
   },
   howItWorks: [
-    "Paste a repository link.",
-    "Walk through the codebase as a 3D world instead of a file tree.",
-    "Ask questions and get answers tied to specific files."
+    {
+      title: "Paste a repository link.",
+      img: "/an open laptop computer sitting on top of a desk next to a notebook and pen.jpg"
+    },
+    {
+      title: "Walk through the codebase as a 3D world instead of a file tree.",
+      img: "/Master Logical Thinking for Superior Software Development 🧠.jpg"
+    },
+    {
+      title: "Ask questions and get answers tied to specific files.",
+      img: "/Coder.jpg"
+    }
   ],
   features: [
     {

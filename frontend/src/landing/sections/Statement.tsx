@@ -34,8 +34,8 @@ export const Statement: React.FC = () => {
 
   return (
     <section ref={sectionRef} className={styles.section} aria-labelledby="statement-heading">
-      <div className={styles.grid}>
-        <div style={{ gridColumn: '1 / -1' }}>
+      <div className={styles.grid} style={{ alignItems: 'center' }}>
+        <div style={{ gridColumn: '1 / 8' }}>
           <h2 id="statement-heading" className={styles.displayHeadline} style={{ marginBottom: '2rem' }}>
             {lines.map((line, i) => (
               <div key={i} style={{ overflow: 'hidden' }}>
@@ -48,6 +48,15 @@ export const Statement: React.FC = () => {
           <p className={styles.bodyText} style={{ maxWidth: '600px' }}>
             {content.statement.support}
           </p>
+        </div>
+        <div style={{ gridColumn: '9 / -1' }}>
+          <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', border: '1px solid var(--muted)' }}>
+            <img 
+              src="/Study _).jpg" 
+              alt="Study" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(100%)' }} 
+            />
+          </div>
         </div>
       </div>
     </section>

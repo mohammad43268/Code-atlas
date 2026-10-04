@@ -37,8 +37,8 @@ export const HowItWorks: React.FC = () => {
       <div className={styles.label} id="how-it-works-heading">(01) How It Works</div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '64px' }}>
-        {content.howItWorks.map((text, i) => (
-          <div key={i} className="anim-row" style={{ width: '100%' }}>
+        {content.howItWorks.map((item, i) => (
+          <div key={i} className="anim-row" style={{ width: '100%', paddingBottom: '32px' }}>
             <div className={`${styles.hairline} anim-hairline`} style={{ marginBottom: '32px', transformOrigin: 'left', willChange: 'transform' }} />
             <div className={styles.grid}>
               <div style={{ gridColumn: '1 / 3' }}>
@@ -46,10 +46,36 @@ export const HowItWorks: React.FC = () => {
                   0{i + 1}
                 </span>
               </div>
-              <div style={{ gridColumn: '3 / -1' }}>
+              <div style={{ gridColumn: '3 / 8' }}>
                 <h3 className={styles.bodyText} style={{ fontSize: 'clamp(24px, 3vw, 40px)' }}>
-                  {text}
+                  {item.title}
                 </h3>
+              </div>
+              <div style={{ gridColumn: '8 / -1', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ 
+                  width: '100%', 
+                  maxWidth: '400px', 
+                  aspectRatio: '16/9', 
+                  overflow: 'hidden', 
+                  border: '1px solid var(--muted)',
+                  backgroundColor: 'var(--surface)'
+                }}>
+                  {item.img && (
+                    <img 
+                      src={item.img} 
+                      alt={`Step ${i+1}`} 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover', 
+                        filter: 'grayscale(100%)', // optional, makes it fit the theme
+                        transition: 'transform 0.5s ease',
+                      }} 
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
