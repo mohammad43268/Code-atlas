@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gsap from 'gsap';
 import { Scene } from './Scene';
+import '../index.css'; // Ensure variables are loaded
 
 interface Message {
   id: string;
@@ -42,8 +43,8 @@ export const ChatPanel: React.FC = () => {
       if (newMsgElements.length > 0) {
         gsap.fromTo(
           newMsgElements,
-          { y: 10, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.4, ease: 'power3.out', stagger: 0.05 }
+          { y: 15, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', stagger: 0.05 }
         );
         newMsgElements.forEach(el => el.classList.add('animated'));
       }
@@ -53,9 +54,7 @@ export const ChatPanel: React.FC = () => {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging.current) return;
-      // Calculate chat width as a percentage of window width from the right
       const newChatWidth = 100 - (e.clientX / window.innerWidth) * 100;
-      // Clamp between 20% and 75%
       if (newChatWidth > 20 && newChatWidth < 75) {
         setChatWidth(newChatWidth);
       }
@@ -85,10 +84,7 @@ export const ChatPanel: React.FC = () => {
     reader.onload = async (event) => {
       const text = event.target?.result;
       if (typeof text === 'string') {
-        setAttachedFile({
-          name: file.name,
-          content: text
-        });
+        setAttachedFile({ name: file.name, content: text });
       }
     };
     reader.readAsText(file);
@@ -160,85 +156,89 @@ export const ChatPanel: React.FC = () => {
   };
 
   return (
-    <div className="responsive-stack" style={{ height: '100vh', width: '100%', display: 'flex', backgroundColor: '#080808' }}>
+    <div className="responsive-stack" style={{ height: '100vh', width: '100%', display: 'flex', backgroundColor: 'var(--bg)' }}>
       
-      <div className="mobile-scene" style={{ width: `${100 - chatWidth}%`, height: '100%', position: 'relative' }}>
+      <div className="mobile-scene" style={{ width: `${100 - chatWidth}%`, height: '100%', position: 'relative', overflow: 'hidden' }}>
         <Scene />
         <div style={{
-          position: 'absolute', bottom: '1rem', left: '1.5rem',
-          pointerEvents: 'none', zIndex: 10, opacity: 0.25
+          position: 'absolute', bottom: '1.5rem', left: '2rem',
+          pointerEvents: 'none', zIndex: 10, opacity: 0.8
         }}>
-          <span style={{ fontFamily: "'Valve', sans-serif", fontSize: '0.75rem', color: '#fff', letterSpacing: '0.1em' }}>CODEATLAS</span>
+          <span style={{ fontFamily: 'COMVOTA, sans-serif', fontSize: '2rem', color: 'var(--ink)', letterSpacing: '0.05em' }}>CODEATLAS</span>
         </div>
       </div>
 
+      {/* Resizer */}
       <div 
         onMouseDown={() => {
           isDragging.current = true;
           document.body.style.cursor = 'col-resize';
         }}
         style={{
-          width: '6px',
+          width: '8px',
           cursor: 'col-resize',
-          backgroundColor: '#0a0a0a',
+          backgroundColor: 'var(--surface)',
           zIndex: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderLeft: '1px solid #1a1a1a',
-          borderRight: '1px solid #1a1a1a',
+          borderLeft: '1px solid var(--ink)',
+          borderRight: '1px solid var(--ink)',
           transition: 'background-color 0.2s',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
-        onMouseLeave={(e) => { if (!isDragging.current) e.currentTarget.style.backgroundColor = '#0a0a0a'; }}
+        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--muted)'; }}
+        onMouseLeave={(e) => { if (!isDragging.current) e.currentTarget.style.backgroundColor = 'var(--surface)'; }}
       >
-        <div style={{ width: '2px', height: '24px', backgroundColor: '#333', borderRadius: '2px' }} />
+        <div style={{ width: '2px', height: '32px', backgroundColor: 'var(--ink)', borderRadius: '1px' }} />
       </div>
 
       <div className="mobile-chat" style={{
         width: `${chatWidth}%`, height: '100%',
         display: 'flex', flexDirection: 'column',
-        borderLeft: '1px solid #1a1a1a',
-        backgroundColor: '#0a0a0a',
+        backgroundColor: 'var(--bg)',
         zIndex: 10
       }}>
         
+        {/* Chat Header */}
         <div style={{
-          padding: '1.25rem 1.5rem',
-          borderBottom: '1px solid #1a1a1a',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+          padding: '1.5rem 2rem',
+          borderBottom: '1px solid var(--ink)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          backgroundColor: 'var(--surface)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <h2 style={{ fontSize: '0.95rem', margin: 0, fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#e5e5e5' }}>Workspace</h2>
+            <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, fontFamily: 'Inter, sans-serif', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workspace Control</h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
               style={{
-                backgroundColor: '#111',
-                color: '#a3a3a3',
-                border: '1px solid #222',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                fontSize: '0.75rem',
+                backgroundColor: 'var(--bg)',
+                color: 'var(--ink)',
+                border: '1px solid var(--ink)',
+                borderRadius: '0px',
+                padding: '6px 12px',
+                fontSize: '0.85rem',
                 fontFamily: "'JetBrains Mono', monospace",
                 outline: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontWeight: 600
               }}
             >
               <option value="gpt-oss:120b">gpt-oss:120b</option>
               <option value="nemotron-3-ultra:cloud">nemotron-3-ultra:cloud</option>
               <option value="qwen-3.8b:edge">qwen-3.8b:edge</option>
             </select>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></div>
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'pulse 2s infinite' }}></div>
           </div>
         </div>
         
+        {/* Messages */}
         <div ref={messagesContainerRef} style={{
-          flex: 1, overflowY: 'auto', padding: '1.5rem',
-          display: 'flex', flexDirection: 'column', gap: '1.25rem',
-          backgroundColor: '#080808'
+          flex: 1, overflowY: 'auto', padding: '2rem',
+          display: 'flex', flexDirection: 'column', gap: '1.5rem',
+          backgroundColor: 'var(--bg)'
         }}>
           {messages.map(msg => (
             <div key={msg.id} className="chat-message" style={{
@@ -246,14 +246,15 @@ export const ChatPanel: React.FC = () => {
               alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start'
             }}>
               <div style={{ 
-                padding: '0.75rem 1rem', 
+                padding: '1rem 1.25rem', 
                 maxWidth: '85%', 
-                borderRadius: '12px',
-                backgroundColor: msg.sender === 'user' ? '#151515' : 'transparent',
-                color: '#c8c8c8',
-                border: msg.sender === 'user' ? 'none' : '1px solid #1a1a1a',
-                fontSize: '0.88rem',
-                lineHeight: 1.7,
+                borderRadius: '0px',
+                backgroundColor: msg.sender === 'user' ? 'var(--ink)' : 'var(--bg)',
+                color: msg.sender === 'user' ? 'var(--bg)' : 'var(--ink)',
+                border: msg.sender === 'user' ? 'none' : '1px solid var(--ink)',
+                boxShadow: msg.sender === 'user' ? '4px 4px 0px var(--surface)' : '4px 4px 0px var(--ink)',
+                fontSize: '0.95rem',
+                lineHeight: 1.6,
                 fontFamily: 'Inter, sans-serif'
               }}>
                 <ReactMarkdown>{msg.text}</ReactMarkdown>
@@ -263,10 +264,10 @@ export const ChatPanel: React.FC = () => {
           
           {isLoading && (
             <div className="chat-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #1a1a1a', display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#333', animation: 'fadeInUp 0.6s ease infinite alternate' }}></div>
-                <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#333', animation: 'fadeInUp 0.6s ease 0.15s infinite alternate' }}></div>
-                <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#333', animation: 'fadeInUp 0.6s ease 0.3s infinite alternate' }}></div>
+              <div style={{ padding: '1rem 1.25rem', border: '1px solid var(--ink)', boxShadow: '4px 4px 0px var(--ink)', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'fadeInUp 0.6s ease infinite alternate' }}></div>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'fadeInUp 0.6s ease 0.15s infinite alternate' }}></div>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'fadeInUp 0.6s ease 0.3s infinite alternate' }}></div>
               </div>
             </div>
           )}
@@ -274,23 +275,25 @@ export const ChatPanel: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Input Area */}
         <div style={{
-          padding: '1rem 1.5rem',
-          borderTop: '1px solid #1a1a1a',
-          backgroundColor: '#0a0a0a'
+          padding: '1.5rem 2rem',
+          borderTop: '1px solid var(--ink)',
+          backgroundColor: 'var(--surface)'
         }}>
           {attachedFile && (
             <div style={{
-              padding: '0.4rem 0.75rem', marginBottom: '0.75rem',
-              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-              borderRadius: '6px', backgroundColor: '#111', border: '1px solid #222',
-              fontSize: '0.75rem', fontFamily: "'JetBrains Mono', monospace"
+              padding: '0.5rem 1rem', marginBottom: '1rem',
+              display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
+              backgroundColor: 'var(--bg)', border: '1px solid var(--ink)',
+              fontSize: '0.85rem', fontFamily: "'JetBrains Mono', monospace",
+              boxShadow: '2px 2px 0px var(--ink)'
             }}>
-              <i className="fa-solid fa-file-code" style={{ color: '#555', fontSize: '0.7rem' }}></i>
-              <span style={{ color: '#aaa' }}>{attachedFile.name}</span>
+              <i className="fa-solid fa-file-code" style={{ color: 'var(--ink)' }}></i>
+              <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{attachedFile.name}</span>
               <button 
                 onClick={() => setAttachedFile(null)} 
-                style={{ border: 'none', background: 'none', color: '#555', cursor: 'pointer', fontSize: '0.7rem', padding: '0 2px' }}
+                style={{ border: 'none', background: 'none', color: 'var(--ink)', cursor: 'pointer', fontSize: '0.85rem' }}
               >
                 <i className="fa-solid fa-xmark"></i>
               </button>
@@ -298,23 +301,23 @@ export const ChatPanel: React.FC = () => {
           )}
           
           <form onSubmit={handleSend} style={{
-            display: 'flex', gap: '0.5rem', alignItems: 'center',
-            backgroundColor: '#111', borderRadius: '12px', border: '1px solid #1a1a1a',
-            padding: '4px 4px 4px 6px',
-            transition: 'border-color 0.2s ease'
+            display: 'flex', gap: '0.75rem', alignItems: 'center',
+            backgroundColor: 'var(--bg)', border: '1px solid var(--ink)',
+            padding: '8px',
+            boxShadow: '4px 4px 0px var(--ink)'
           }}>
             <button 
               type="button"
               onClick={() => fileInputRef.current?.click()}
               style={{
-                width: '36px', height: '36px', padding: 0, flexShrink: 0,
+                width: '44px', height: '44px', padding: 0, flexShrink: 0,
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                borderRadius: '8px', border: 'none', background: 'none',
-                color: '#555', cursor: 'pointer', transition: 'color 0.2s ease'
+                border: '1px solid var(--ink)', background: 'var(--surface)',
+                color: 'var(--ink)', cursor: 'pointer', transition: 'all 0.2s ease'
               }}
               title="Attach File"
             >
-              <i className="fa-solid fa-paperclip" style={{ fontSize: '0.85rem' }}></i>
+              <i className="fa-solid fa-paperclip" style={{ fontSize: '1rem' }}></i>
             </button>
             <input 
               type="file" 
@@ -327,12 +330,12 @@ export const ChatPanel: React.FC = () => {
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your codebase..." 
+              placeholder="Ask the orchestrator..." 
               style={{
                 flex: 1, border: 'none', outline: 'none',
-                background: 'transparent', color: '#d4d4d4',
-                fontSize: '0.88rem', fontFamily: 'Inter, sans-serif',
-                padding: '0.5rem 0.25rem'
+                background: 'transparent', color: 'var(--ink)',
+                fontSize: '1rem', fontFamily: 'Inter, sans-serif',
+                padding: '0.5rem'
               }}
               disabled={isLoading}
             />
@@ -340,19 +343,19 @@ export const ChatPanel: React.FC = () => {
               type="submit"
               disabled={isLoading}
               style={{
-                height: '36px', padding: '0 1rem', flexShrink: 0,
+                height: '44px', padding: '0 1.5rem', flexShrink: 0,
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                borderRadius: '8px', border: 'none',
-                backgroundColor: isLoading ? '#1a1a1a' : '#fff',
-                color: isLoading ? '#555' : '#000',
+                border: '1px solid var(--ink)',
+                backgroundColor: 'var(--ink)',
+                color: 'var(--bg)',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                fontWeight: 600, fontSize: '0.75rem',
+                fontWeight: 700, fontSize: '0.85rem',
                 fontFamily: 'Inter, sans-serif',
                 textTransform: 'uppercase', letterSpacing: '0.05em',
-                transition: 'background-color 0.2s ease'
+                transition: 'opacity 0.2s ease'
               }}
             >
-              {isLoading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-arrow-up"></i>}
+              {isLoading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <span>SEND</span>}
             </button>
           </form>
         </div>
