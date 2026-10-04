@@ -83,6 +83,10 @@ export const Navbar: React.FC = () => {
 
   const closeMenu = () => setMenuOpen(false);
 
+  if (location.pathname === '/scene') {
+    return null;
+  }
+
   return (
     <>
       <div style={{
