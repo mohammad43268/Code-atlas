@@ -2,7 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { WaterCanvas } from './WaterCanvas';
 import { LandingSections } from '../landing/LandingSections';
 
-export const LandingPage: React.FC = () => {
+interface LandingPageProps {
+  onExplore?: () => void;
+}
+
+export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wordmarkRef = useRef<HTMLHeadingElement>(null);
 
@@ -89,18 +93,55 @@ export const LandingPage: React.FC = () => {
           width: '100%',
           maxWidth: 'var(--wordmark-width, 100%)'
         }}>
-          <p style={{
-            fontSize: 'clamp(18px, 2vw, 24px)',
-            color: 'var(--ink)',
-            maxWidth: '30ch', 
-            margin: 0,
-            fontWeight: 400,
-            lineHeight: 1.3,
-            letterSpacing: '0.02em',
-            fontFamily: 'Comvota, sans-serif'
-          }}>
-            Explore any GitHub codebase as a 3D world.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <p style={{
+              fontSize: 'clamp(18px, 2vw, 24px)',
+              color: 'var(--ink)',
+              maxWidth: '30ch', 
+              margin: 0,
+              fontWeight: 400,
+              lineHeight: 1.3,
+              letterSpacing: '0.02em',
+              fontFamily: 'Comvota, sans-serif'
+            }}>
+              Explore any GitHub codebase as a 3D world.
+            </p>
+            
+            <button 
+              onClick={onExplore}
+              style={{
+                width: 'fit-content',
+                padding: '12px 24px',
+                backgroundColor: 'var(--ink)',
+                color: 'var(--bg)',
+                border: '1px solid var(--ink)',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+                boxShadow: '4px 4px 0px rgba(0,0,0,0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--ink)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--ink)';
+                e.currentTarget.style.color = 'var(--bg)';
+                e.currentTarget.style.transform = 'translate(0px, 0px)';
+              }}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'translate(2px, 2px)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = 'translate(0px, 0px)'}
+            >
+              Enter 3D Space <i className="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
           
           <span style={{
             fontSize: 'clamp(14px, 1.5vw, 18px)',
