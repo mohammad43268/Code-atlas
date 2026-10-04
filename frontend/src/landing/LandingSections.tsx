@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import ScrollTrigger from 'gsap/ScrollTrigger';
 import Lenis from '@studio-freight/lenis';
 
+import { DataFlow } from './sections/DataFlow';
 import { Statement } from './sections/Statement';
 import { HowItWorks } from './sections/HowItWorks';
 import { Features } from './sections/Features';
@@ -43,6 +44,7 @@ export const LandingSections: React.FC = () => {
 
   return (
     <div style={{ position: 'relative', zIndex: 10, background: 'var(--bg)' }}>
+      <DataFlow />
       <Statement />
       <HowItWorks />
       <Features />
