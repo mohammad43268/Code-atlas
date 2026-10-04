@@ -67,7 +67,7 @@ function generateNetwork() {
 }
 
 function FolderModel({ position }: { position: [number, number, number] }) {
-  const { scene } = useGLTF('/folder-fav.fbx.glb');
+  const { scene } = useGLTF('/folder.glb');
   const clone = useMemo(() => scene.clone(true), [scene]);
   return <primitive object={clone} position={position} scale={0.35} />;
 }
