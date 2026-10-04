@@ -1,39 +1,34 @@
 @font-face {
-  font-family: 'Valve';
-  src: url('/valve/valve-bd.otf') format('opentype');
-  font-weight: bold;
+  font-family: 'Comvota';
+  src: url('/comvota/COMVOTA.woff') format('woff'),
+       url('/comvota/COMVOTA.otf') format('opentype');
+  font-weight: normal;
   font-style: normal;
 }
 
-@font-face {
-  font-family: 'Valve';
-  src: url('/valve/valve-bd-it.otf') format('opentype');
-  font-weight: bold;
-  font-style: italic;
-}
-
 :root {
-  /* Dense Black & White Dark Mode Palette */
-  --bg-primary: #000000;
-  --bg-secondary: #0A0A0A;
-  --bg-elevated: #000000;
-  
-  --border-subtle: #333333;
-  --border-strong: #FFFFFF;
-  
-  --text-primary: #FFFFFF;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-  
-  --accent-primary: #FFFFFF;
-  --accent-hover: #E5E5E5;
-  --accent-highlight: #FFFFFF; /* Pure White for all special actions and paths */
+  /* CodeAtlas Light Theme Tokens */
+  --bg: #EDEDED;
+  --surface: #D4D4D4;
+  --muted: #8C8C8C;
+  --ink: #0A0A0A;
 
-  /* Elegant Glassmorphism & Drop Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(255, 255, 255, 0.05), 0 2px 4px -1px rgba(255, 255, 255, 0.03);
-  --shadow-lg: 0 10px 30px -3px rgba(255, 255, 255, 0.05), 0 4px 10px -2px rgba(255, 255, 255, 0.02);
-  --shadow-float: 0 20px 40px -10px rgba(255,255,255,0.08);
+  /* We keep a few semantic variables mapped to the new palette to not completely break existing components, 
+     but neutralize them to the light theme. */
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--surface);
+  --bg-elevated: var(--surface);
+  
+  --border-subtle: var(--muted);
+  --border-strong: var(--ink);
+  
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink);
+  --text-muted: var(--muted);
+  
+  --accent-primary: var(--ink);
+  --accent-hover: var(--surface);
+  --accent-highlight: var(--ink);
 }
 
 * {
@@ -44,7 +39,7 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Comvota', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   overflow-x: hidden;
@@ -54,8 +49,8 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6, .valve-font {
-  font-family: 'Valve', sans-serif;
-  font-weight: normal; /* Valve font is naturally bold */
+  font-family: 'Comvota', sans-serif;
+  font-weight: normal; 
   letter-spacing: 0.02em;
 }
 

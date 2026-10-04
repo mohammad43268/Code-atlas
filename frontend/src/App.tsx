@@ -1,22 +1,25 @@
-import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { LandingPage } from './components/LandingPage';
-import { ChatPanel } from './components/ChatPanel';
+import { Navbar } from './components/Navbar';
 import './index.css'; 
 
-type ViewState = 'landing' | 'chat';
+const Placeholder = ({ title }: { title: string }) => (
+  <div style={{ height: '100svh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+    <h1 style={{ color: 'var(--ink)', fontSize: '2rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</h1>
+  </div>
+);
 
 function App() {
-  const [currentView, setCurrentView] = useState<ViewState>('landing');
-
   return (
-    <>
-      {currentView === 'landing' && (
-        <LandingPage onExplore={() => setCurrentView('chat')} />
-      )}
-      {currentView === 'chat' && (
-        <ChatPanel />
-      )}
-    </>
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/docs" element={<Placeholder title="Documentation" />} />
+        <Route path="/projects" element={<Placeholder title="Projects" />} />
+        <Route path="/about" element={<Placeholder title="About" />} />
+      </Routes>
+    </Router>
   );
 }
 

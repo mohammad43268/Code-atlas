@@ -29,7 +29,8 @@ app.post(["/ask", "/api/ask"], async (req, res) => {
             finalPrompt = `Context from uploaded file (${fileName || 'unknown'}):\n\n${fileContent}\n\n---\n\nUser Question: ${question}`;
         }
 
-        const systemPrompt = `You are CodeAtlas AI, an elite senior software architect and coding assistant.
+        const systemPrompt = `You are CodeAtlas AI, an elite senior software architect and coding assistant powered by the ${model || 'gpt-oss:120b'} model.
+If asked what model you are or what architecture you are based on, you must explicitly state that you are powered by ${model || 'gpt-oss:120b'}.
 You help developers understand repositories.
 Always format your responses using clean Markdown. Use code blocks with language tags for any code.
 Keep your answers highly accurate, concise, and professional.`;

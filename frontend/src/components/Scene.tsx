@@ -8,7 +8,6 @@ const ROOT_COUNT = 5;
 const CHILDREN_PER_ROOT = 8;
 const RADIUS_ROOT = 3;
 const RADIUS_CHILD = 1.6;
-const FLOW_PARTICLE_COUNT = 18; 
 
 const FOLDER_LABELS = ['src/', 'components/', 'utils/', 'hooks/', 'api/'];
 
@@ -230,7 +229,7 @@ export const Scene = () => {
 
       <FileNetwork />
 
-      <EffectComposer disableNormalPass>
+      <EffectComposer>
         <Bloom luminanceThreshold={1} mipmapBlur intensity={0.6} radius={0.5} />
       </EffectComposer>
 
