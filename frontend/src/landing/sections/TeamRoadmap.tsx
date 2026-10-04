@@ -1,10 +1,41 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import styles from '../styles/landing.module.css';
 import { content } from '../content/landing.content';
 
 export const TeamRoadmap: React.FC = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.anim-roadmap-container',
+          start: 'top 85%',
+          once: true
+        }
+      });
+
+      tl.fromTo('.anim-timeline-line',
+        { scaleX: 0 },
+        { scaleX: 1, duration: 1, ease: 'power3.out', transformOrigin: 'left' }
+      )
+      .fromTo('.anim-timeline-marker',
+        { opacity: 0, scale: 0 },
+        { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)' },
+        "-=0.2"
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className={styles.section} aria-labelledby="team-roadmap-heading">
+    <section ref={sectionRef} className={styles.section} aria-labelledby="team-roadmap-heading">
       <div className={styles.label} id="team-roadmap-heading">(04) Team & Roadmap</div>
       
       <div className={styles.grid} style={{ marginTop: '64px', gap: '64px' }}>
@@ -20,13 +51,13 @@ export const TeamRoadmap: React.FC = () => {
           </div>
         </div>
         
-        <div style={{ gridColumn: '7 / -1' }}>
+        <div className="anim-roadmap-container" style={{ gridColumn: '7 / -1' }}>
           <h3 className={styles.bodyText} style={{ marginBottom: '32px', color: 'var(--muted)', fontSize: '13px', letterSpacing: '0.1em' }}>ROADMAP</h3>
           
           <div style={{ position: 'relative', height: '60px', marginTop: '64px' }}>
-            <div className={styles.hairline} style={{ position: 'absolute', top: '50%', width: '100%', opacity: 1, backgroundColor: 'var(--ink)' }} />
+            <div className={`${styles.hairline} anim-timeline-line`} style={{ position: 'absolute', top: '50%', width: '100%', opacity: 1, backgroundColor: 'var(--ink)' }} />
             
-            <div style={{ 
+            <div className="anim-timeline-marker" style={{ 
               position: 'absolute', 
               top: '50%', 
               left: '50%', 
