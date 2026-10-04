@@ -1,0 +1,92 @@
+.section {
+  padding: clamp(96px, 14vw, 200px) clamp(16px, 4vw, 24px);
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--bg);
+  color: var(--ink);
+  position: relative;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+}
+
+.hairline {
+  height: 1px;
+  background-color: var(--muted);
+  opacity: 0.3;
+  width: 100%;
+}
+
+.label {
+  font-family: inherit;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 2rem;
+}
+
+.displayHeadline {
+  font-family: 'Comvota', sans-serif;
+  font-size: clamp(40px, 7vw, 120px);
+  color: var(--ink);
+  line-height: 0.9;
+  font-weight: 300;
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.bodyText {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(18px, 1.5vw, 24px);
+  color: var(--ink);
+  line-height: 1.4;
+  margin: 0;
+  font-weight: 400;
+}
+
+.footerWordmark {
+  font-family: 'Comvota', sans-serif;
+  font-weight: 300;
+  line-height: 0.8;
+  color: var(--ink);
+  text-transform: uppercase;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* Feature specific */
+.featureFrame {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background-color: var(--surface);
+  border: 1px solid var(--muted);
+  opacity: 0.5;
+  border-radius: 4px;
+}
+
+.statusLabel {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+/* Responsive Overrides */
+@media (max-width: 719px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+}
