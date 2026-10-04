@@ -203,13 +203,17 @@ export const ChatPanel: React.FC = () => {
         <div style={{
           padding: '1.5rem 2rem',
           borderBottom: '1px solid var(--ink)',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          display: 'flex', 
+          flexWrap: 'wrap',
+          gap: '1rem',
+          justifyContent: 'space-between', 
+          alignItems: 'center',
           backgroundColor: 'var(--surface)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 200px' }}>
             <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, fontFamily: 'Inter, sans-serif', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workspace Control</h2>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
@@ -223,14 +227,16 @@ export const ChatPanel: React.FC = () => {
                 fontFamily: "'JetBrains Mono', monospace",
                 outline: 'none',
                 cursor: 'pointer',
-                fontWeight: 600
+                fontWeight: 600,
+                maxWidth: '200px',
+                textOverflow: 'ellipsis'
               }}
             >
               <option value="gpt-oss:120b">gpt-oss:120b</option>
               <option value="nemotron-3-ultra:cloud">nemotron-3-ultra:cloud</option>
               <option value="qwen-3.8b:edge">qwen-3.8b:edge</option>
             </select>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'pulse 2s infinite' }}></div>
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'pulse 2s infinite', flexShrink: 0 }}></div>
           </div>
         </div>
         
@@ -304,7 +310,8 @@ export const ChatPanel: React.FC = () => {
             display: 'flex', gap: '0.75rem', alignItems: 'center',
             backgroundColor: 'var(--bg)', border: '1px solid var(--ink)',
             padding: '8px',
-            boxShadow: '4px 4px 0px var(--ink)'
+            boxShadow: '4px 4px 0px var(--ink)',
+            flexWrap: 'wrap'
           }}>
             <button 
               type="button"

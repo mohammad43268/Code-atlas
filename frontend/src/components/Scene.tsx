@@ -69,7 +69,7 @@ function generateNetwork() {
 function FolderModel({ position }: { position: [number, number, number] }) {
   const { scene } = useGLTF('/folder.glb');
   const clone = useMemo(() => scene.clone(true), [scene]);
-  return <primitive object={clone} position={position} scale={0.35} />;
+  return <primitive object={clone} position={position} scale={0.35} rotation={[Math.PI / 2, 0, 0]} />;
 }
 
 function FolderNode({ position, label }: { position: [number, number, number]; label: string }) {
