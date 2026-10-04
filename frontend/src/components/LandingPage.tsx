@@ -1,12 +1,9 @@
 import React, { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { WaterCanvas } from './WaterCanvas';
 import { LandingSections } from '../landing/LandingSections';
 
-interface LandingPageProps {
-  onExplore?: () => void;
-}
-
-export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
+export const LandingPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wordmarkRef = useRef<HTMLHeadingElement>(null);
 
@@ -83,7 +80,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '3vh'
+        gap: '3vh',
+        pointerEvents: 'none' // Ensure clicks fall through unless specified
       }}>
         
         <div style={{
@@ -91,7 +89,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
           justifyContent: 'space-between',
           alignItems: 'flex-end',
           width: '100%',
-          maxWidth: 'var(--wordmark-width, 100%)'
+          maxWidth: 'var(--wordmark-width, 100%)',
+          pointerEvents: 'auto' // Re-enable pointer events for the hero content
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <p style={{
@@ -107,8 +106,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
               Explore any GitHub codebase as a 3D world.
             </p>
             
-            <button 
-              onClick={onExplore}
+            <Link 
+              to="/scene"
               style={{
                 width: 'fit-content',
                 padding: '12px 24px',
@@ -125,7 +124,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
                 alignItems: 'center',
                 gap: '8px',
                 transition: 'all 0.2s ease',
-                boxShadow: '4px 4px 0px rgba(0,0,0,0.2)'
+                boxShadow: '4px 4px 0px rgba(0,0,0,0.2)',
+                textDecoration: 'none'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -140,7 +140,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
               onMouseUp={(e) => e.currentTarget.style.transform = 'translate(0px, 0px)'}
             >
               Enter 3D Space <i className="fa-solid fa-arrow-right"></i>
-            </button>
+            </Link>
           </div>
           
           <span style={{
@@ -159,7 +159,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onExplore }) => {
         <div style={{
           width: '100%',
           display: 'flex',
-          justifyContent: 'center' 
+          justifyContent: 'center',
+          pointerEvents: 'none'
         }}>
           <h1 
             ref={wordmarkRef}

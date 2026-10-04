@@ -1,15 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { ChatPanel } from '../components/ChatPanel';
 
-interface Scene3DProps {
-  onBack: () => void;
-}
-
-export const Scene3D: React.FC<Scene3DProps> = ({ onBack }) => {
+export const Scene3D: React.FC = () => {
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <button 
-        onClick={onBack}
+      <Link 
+        to="/"
         style={{
           position: 'absolute',
           top: '24px',
@@ -29,14 +26,15 @@ export const Scene3D: React.FC<Scene3DProps> = ({ onBack }) => {
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          transition: 'transform 0.1s ease'
+          transition: 'transform 0.1s ease',
+          textDecoration: 'none'
         }}
         onMouseDown={(e) => e.currentTarget.style.transform = 'translate(4px, 4px)'}
         onMouseUp={(e) => e.currentTarget.style.transform = 'translate(0px, 0px)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'translate(0px, 0px)'}
       >
         <i className="fa-solid fa-arrow-left"></i> BACK
-      </button>
+      </Link>
       <ChatPanel />
     </div>
   );
