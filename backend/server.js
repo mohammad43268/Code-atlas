@@ -8,10 +8,10 @@ dotenv.config();
 const app = express();
 const port = 8080;
 
-// Setup OpenAI client to use Ollama API
+// Setup OpenAI client to use SambaNova Cloud API
 const client = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY || "ollama",
-    baseURL: "http://127.0.0.1:11434/v1",
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.sambanova.ai/v1",
 });
 
 app.use(cors());
@@ -36,11 +36,11 @@ You help developers understand repositories.
 Always format your responses using clean Markdown. Use code blocks with language tags for any code.
 Keep your answers highly accurate, concise, and professional.`;
 
-        // Map the frontend's aesthetic model names to actual valid Ollama models
-        let actualModel = "llama3.2"; // default fallback
-        if (model === "gpt-oss:120b") actualModel = "llama3.2";
-        else if (model === "nemotron-3-ultra:cloud") actualModel = "mistral";
-        else if (model === "qwen-3.8b:edge") actualModel = "qwen2.5:3b";
+        // Map the frontend's aesthetic model names to actual valid SambaNova Cloud models
+        let actualModel = "Meta-Llama-3.1-8B-Instruct"; // default fallback
+        if (model === "gpt-oss:120b") actualModel = "Meta-Llama-3.1-70B-Instruct";
+        else if (model === "nemotron-3-ultra:cloud") actualModel = "Meta-Llama-3.1-405B-Instruct";
+        else if (model === "qwen-3.8b:edge") actualModel = "Qwen2.5-72B-Instruct";
 
         const response = await client.chat.completions.create({
             model: actualModel, 
