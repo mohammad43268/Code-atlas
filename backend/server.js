@@ -8,10 +8,10 @@ dotenv.config();
 const app = express();
 const port = 8080;
 
-// Setup OpenAI client to use Ollama Cloud API
+// Setup OpenAI client to use Groq Cloud API
 const client = new OpenAI({
     apiKey: process.env.GROQ_API_KEY,
-    baseURL: "https://api.ollama.com/v1",
+    baseURL: "https://api.groq.com/openai/v1",
 });
 
 app.use(cors());
@@ -36,11 +36,11 @@ You help developers understand repositories.
 Always format your responses using clean Markdown. Use code blocks with language tags for any code.
 Keep your answers highly accurate, concise, and professional.`;
 
-        // Map the frontend's aesthetic model names to actual valid Ollama Cloud models
-        let actualModel = "llama3.1"; // default fallback
-        if (model === "gpt-oss:120b") actualModel = "llama3.1";
-        else if (model === "nemotron-3-ultra:cloud") actualModel = "mistral";
-        else if (model === "qwen-3.8b:edge") actualModel = "qwen2.5";
+        // Map the frontend's aesthetic model names to real Groq Cloud models
+        let actualModel = "llama3-8b-8192"; // default fallback
+        if (model === "gpt-oss:120b") actualModel = "llama3-70b-8192";
+        else if (model === "nemotron-3-ultra:cloud") actualModel = "mixtral-8x7b-32768";
+        else if (model === "qwen-3.8b:edge") actualModel = "gemma2-9b-it";
 
         const response = await client.chat.completions.create({
             model: actualModel, 
