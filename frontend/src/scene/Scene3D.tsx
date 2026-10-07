@@ -5,7 +5,7 @@ import { ChatPanel } from '../components/ChatPanel';
 export const Scene3D: React.FC = () => {
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <Link 
+      <Link
         to="/"
         style={{
           position: 'absolute',

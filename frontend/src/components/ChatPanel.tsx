@@ -25,6 +25,7 @@ export const ChatPanel: React.FC = () => {
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [chatWidth, setChatWidth] = useState(40);
   const [selectedModel, setSelectedModel] = useState('gpt-oss:120b');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,8 +111,8 @@ export const ChatPanel: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const apiUrl = import.meta.env.PROD ? '/api/ask' : 'http://localhost:8080/ask';
-      const res = await fetch(apiUrl, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_BASE_URL}/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -131,7 +132,8 @@ export const ChatPanel: React.FC = () => {
       }
       
       if (!res.ok) {
-        throw new Error(data?.error || `Server error: ${res.status}`);
+        // Improved error handling as requested
+        throw new Error(`[Status ${res.status}] ${data?.error || 'Unknown error occurred'}`);
       }
 
       const aiResponse: Message = { 
@@ -146,7 +148,7 @@ export const ChatPanel: React.FC = () => {
       const errorMsg: Message = { 
         id: (Date.now() + 1).toString(), 
         sender: 'ai', 
-        text: `Error: Could not process request. ${err.message}`,
+        text: `${err.message}`, // Displays precise data.error and status
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -215,10 +217,7 @@ export const ChatPanel: React.FC = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0, position: 'relative' }}>
             <div 
-              onClick={() => {
-                const el = document.getElementById('custom-dropdown');
-                if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-              }}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               style={{
                 backgroundColor: 'var(--bg)',
                 color: 'var(--ink)',
@@ -236,46 +235,45 @@ export const ChatPanel: React.FC = () => {
               }}
             >
               <span>{selectedModel}</span>
-              <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.75rem' }}></i>
+              <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.75rem', transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}></i>
             </div>
             
-            <div id="custom-dropdown" style={{
-              display: 'none',
-              position: 'absolute',
-              top: '100%',
-              left: '0',
-              width: '100%',
-              marginTop: '8px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--ink)',
-              boxShadow: '4px 4px 0px var(--ink)',
-              zIndex: 100,
-              display: 'none' // managed via inline script / state in React
-            }}>
-              {['gpt-oss:120b', 'nemotron-3-ultra:cloud', 'qwen-3.8b:edge'].map((m) => (
-                <div
-                  key={m}
-                  onClick={(e) => {
-                    setSelectedModel(m);
-                    const parent = e.currentTarget.parentElement;
-                    if (parent) parent.style.display = 'none';
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--muted)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--surface)'}
-                  style={{
-                    padding: '8px 16px',
-                    cursor: 'pointer',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    borderBottom: '1px solid rgba(0,0,0,0.1)'
-                  }}
-                >
-                  {m}
-                </div>
-              ))}
-            </div>
+            {isDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '0',
+                width: '100%',
+                marginTop: '8px',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--ink)',
+                boxShadow: '4px 4px 0px var(--ink)',
+                zIndex: 100
+              }}>
+                {['gemma4:31b', 'nemotron-3-ultra', 'nemotron-3-super', 'gpt-oss:120b'].map((m) => (
+                  <div
+                    key={m}
+                    onClick={() => {
+                      setSelectedModel(m);
+                      setIsDropdownOpen(false);
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--muted)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--surface)'}
+                    style={{
+                      padding: '8px 16px',
+                      cursor: 'pointer',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      borderBottom: '1px solid rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {m}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'pulse 2s infinite', flexShrink: 0, marginLeft: '8px' }}></div>
           </div>

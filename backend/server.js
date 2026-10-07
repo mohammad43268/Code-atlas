@@ -8,11 +8,6 @@ dotenv.config();
 const app = express();
 const port = 8080;
 
-// Setup OpenAI client to use Groq Cloud API
-const client = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: "https://api.groq.com/openai/v1",
-});
 
 app.use(cors());
 app.use(express.json());
@@ -30,20 +25,39 @@ app.post(["/ask", "/api/ask"], async (req, res) => {
             finalPrompt = `Context from uploaded file (${fileName || 'unknown'}):\n\n${fileContent}\n\n---\n\nUser Question: ${question}`;
         }
 
-        const systemPrompt = `You are CodeAtlas AI, an elite senior software architect and coding assistant powered by the ${model || 'gpt-oss:120b'} model.
-If asked what model you are or what architecture you are based on, you must explicitly state that you are powered by ${model || 'gpt-oss:120b'}.
+        const KEY_BY_MODEL = {
+            "gemma4:31b": process.env.OLLAMA_API_KEY_1,
+            "nemotron-3-ultra": process.env.OLLAMA_API_KEY_1,
+            "nemotron-3-super": process.env.OLLAMA_API_KEY_2,
+            "gpt-oss:120b": process.env.OLLAMA_API_KEY_2
+        };
+
+        if (!model || !(model in KEY_BY_MODEL)) {
+            return res.status(400).json({ error: "Unsupported model" });
+        }
+
+        const selectedApiKey = KEY_BY_MODEL[model];
+        if (!selectedApiKey) {
+            const missingEnv = model === "gemma4:31b" || model === "nemotron-3-ultra" 
+                ? "OLLAMA_API_KEY_1" 
+                : "OLLAMA_API_KEY_2";
+            return res.status(401).json({ error: `API key missing. Please set ${missingEnv} in your .env file.` });
+        }
+
+        const systemPrompt = `You are CodeAtlas AI, an elite senior software architect and coding assistant powered by the ${model} model.
+If asked what model you are or what architecture you are based on, you must explicitly state that you are powered by ${model}.
 You help developers understand repositories.
 Always format your responses using clean Markdown. Use code blocks with language tags for any code.
 Keep your answers highly accurate, concise, and professional.`;
 
-        // Map the frontend's aesthetic model names to real Groq Cloud models
-        let actualModel = "llama3-8b-8192"; // default fallback
-        if (model === "gpt-oss:120b") actualModel = "llama3-70b-8192";
-        else if (model === "nemotron-3-ultra:cloud") actualModel = "mixtral-8x7b-32768";
-        else if (model === "qwen-3.8b:edge") actualModel = "gemma2-9b-it";
+        // Setup OpenAI client dynamically based on the routed API Key
+        const client = new OpenAI({
+            apiKey: selectedApiKey,
+            baseURL: "https://ollama.com/v1", // Correct Ollama cloud endpoint
+        });
 
         const response = await client.chat.completions.create({
-            model: actualModel, 
+            model: model, 
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: finalPrompt }
@@ -55,8 +69,11 @@ Keep your answers highly accurate, concise, and professional.`;
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message || "An unexpected error occurred." });
+        console.error("Provider Error Status:", error.status);
+        console.error("Provider Error Message:", error.message);
+        
+        const statusCode = error.status || 500;
+        res.status(statusCode).json({ error: error.message || "An unexpected error occurred." });
     }
 });
 
