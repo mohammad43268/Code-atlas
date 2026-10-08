@@ -12,26 +12,25 @@ export const Scene3D: React.FC = () => {
           top: '24px',
           left: '24px',
           zIndex: 100,
-          backgroundColor: 'var(--bg)',
-          color: 'var(--ink)',
-          border: '1px solid var(--ink)',
-          boxShadow: '4px 4px 0px var(--ink)',
-          padding: '12px 20px',
+          backgroundColor: 'rgba(30, 30, 30, 0.6)',
+          backdropFilter: 'blur(12px)',
+          color: 'var(--text-primary)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '24px',
+          padding: '10px 20px',
           fontFamily: 'Inter, sans-serif',
-          fontWeight: 700,
+          fontWeight: 500,
           fontSize: '0.85rem',
-          textTransform: 'uppercase',
           letterSpacing: '0.05em',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          transition: 'transform 0.1s ease',
+          transition: 'all 0.2s ease',
           textDecoration: 'none'
         }}
-        onMouseDown={(e) => e.currentTarget.style.transform = 'translate(4px, 4px)'}
-        onMouseUp={(e) => e.currentTarget.style.transform = 'translate(0px, 0px)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'translate(0px, 0px)'}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(50, 50, 50, 0.8)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 30, 30, 0.6)'}
       >
         <i className="fa-solid fa-arrow-left"></i> BACK
       </Link>

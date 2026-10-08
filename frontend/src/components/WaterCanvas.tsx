@@ -1,7 +1,6 @@
 import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import heroMapUrl from '../assets/hero-map.webp';
 
 import { vertexShader, fragmentShader } from '../glsl/WaterShader';
 
@@ -20,8 +19,8 @@ const WaterQuad = () => {
       uMouse: { value: new THREE.Vector2(-1000, -1000) }, 
       uMouseAlpha: { value: 0.0 },
       uRipples: { value: ripples },
-      uColorA: { value: parseColor('#FFFFFF') },
-      uColorB: { value: parseColor('#FFFFFF') },
+      uColorA: { value: parseColor('#020202') },
+      uColorB: { value: parseColor('#0b0b0b') },
       uColorC: { value: parseColor('#000000') },
       uMotion: { value: 1.0 },
       uImage: { value: null },
@@ -38,31 +37,6 @@ const WaterQuad = () => {
       materialRef.current.uniforms.uResolution.value.set(size.width, size.height);
     }
   }, [size]);
-
-  useEffect(() => {
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      heroMapUrl,
-      (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.generateMipmaps = true;
-
-        if (materialRef.current) {
-          materialRef.current.uniforms.uImage.value = texture;
-          materialRef.current.uniforms.uImageAspect.value = texture.image.width / texture.image.height;
-          materialRef.current.uniforms.uImageLoaded.value = 1.0;
-        }
-      },
-      undefined,
-      (err) => {
-        console.warn('Failed to load water background image, defaulting to solid water.', err);
-      }
-    );
-  }, []);
 
   const rippleIndex = useRef(0);
   const lastRipplePos = useRef(new THREE.Vector2());

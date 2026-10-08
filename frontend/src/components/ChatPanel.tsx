@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { AIMessageRenderer } from './AIMessageRenderer';
 import gsap from 'gsap';
 import { Scene } from './Scene';
 import '../index.css'; // Ensure variables are loaded
@@ -110,9 +111,17 @@ export const ChatPanel: React.FC = () => {
     setAttachedFile(null);
     setIsLoading(true);
     
+    const aiMessageId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: aiMessageId,
+      sender: 'ai',
+      text: '',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+
     try {
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-      const res = await fetch(`${API_BASE_URL}/ask`, {
+      const res = await fetch(`${API_BASE_URL}/ask?stream=true`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -123,35 +132,51 @@ export const ChatPanel: React.FC = () => {
         })
       });
       
-      let data;
-      const contentType = res.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        throw new Error(`Server returned a non-JSON response. Status: ${res.status}`);
-      }
-      
       if (!res.ok) {
-        // Improved error handling as requested
-        throw new Error(`[Status ${res.status}] ${data?.error || 'Unknown error occurred'}`);
+        let errorData;
+        try { errorData = await res.json(); } catch { /* ignore */ }
+        throw new Error(`[Status ${res.status}] ${errorData?.error || 'Unknown error occurred'}`);
       }
 
-      const aiResponse: Message = { 
-        id: (Date.now() + 1).toString(), 
-        sender: 'ai', 
-        text: data?.answer || 'No answer provided.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, aiResponse]);
+      if (!res.body) throw new Error('ReadableStream not supported in this browser.');
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      setIsLoading(false); // Disable spinning loader as streaming starts
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value, { stream: true });
+        
+        const lines = chunkValue.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6);
+            if (dataStr === '[DONE]') {
+              done = true;
+              break;
+            }
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.content) {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === aiMessageId ? { ...msg, text: msg.text + parsed.content } : msg
+                ));
+              }
+            } catch (e) {
+              console.error('Failed to parse SSE data', e);
+            }
+          }
+        }
+      }
     } catch (err: any) {
       console.error("Chat Error:", err);
-      const errorMsg: Message = { 
-        id: (Date.now() + 1).toString(), 
-        sender: 'ai', 
-        text: `${err.message}`, // Displays precise data.error and status
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId ? { ...msg, text: msg.text + `\n\n**Error**: ${err.message}` } : msg
+      ));
     } finally {
       setIsLoading(false);
     }
@@ -198,40 +223,43 @@ export const ChatPanel: React.FC = () => {
         width: `${chatWidth}%`, height: '100%',
         display: 'flex', flexDirection: 'column',
         backgroundColor: 'var(--bg)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
         zIndex: 10
       }}>
         
         {/* Chat Header */}
         <div style={{
-          padding: '1.5rem 2rem',
-          borderBottom: '1px solid var(--ink)',
+          padding: '1.25rem 2rem',
+          borderBottom: '1px solid var(--border-subtle)',
           display: 'flex', 
           flexWrap: 'wrap',
           gap: '1rem',
           justifyContent: 'space-between', 
           alignItems: 'center',
-          backgroundColor: 'var(--surface)'
+          backgroundColor: 'transparent'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 200px' }}>
-            <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700, fontFamily: 'Inter, sans-serif', color: 'var(--ink)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Workspace Control</h2>
+            {/* Header left empty to match minimalist chat interface */}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0, position: 'relative' }}>
             <div 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               style={{
-                backgroundColor: 'var(--bg)',
-                color: 'var(--ink)',
-                border: '1px solid var(--ink)',
-                padding: '8px 16px',
-                fontSize: '0.85rem',
-                fontFamily: "'JetBrains Mono', monospace",
+                backgroundColor: 'var(--bg-elevated)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '16px',
+                padding: '6px 14px',
+                fontSize: '0.8rem',
+                fontFamily: 'Inter, sans-serif',
                 cursor: 'pointer',
-                fontWeight: 600,
-                minWidth: '220px',
+                fontWeight: 500,
+                minWidth: '180px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                boxShadow: '4px 4px 0px var(--ink)'
+                transition: 'all 0.2s ease'
               }}
             >
               <span>{selectedModel}</span>
@@ -245,9 +273,11 @@ export const ChatPanel: React.FC = () => {
                 left: '0',
                 width: '100%',
                 marginTop: '8px',
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--ink)',
-                boxShadow: '4px 4px 0px var(--ink)',
+                backgroundColor: 'var(--bg-solid)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '12px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                overflow: 'hidden',
                 zIndex: 100
               }}>
                 {['gemma4:31b', 'nemotron-3-ultra', 'nemotron-3-super', 'gpt-oss:120b'].map((m) => (
@@ -262,11 +292,11 @@ export const ChatPanel: React.FC = () => {
                     style={{
                       padding: '8px 16px',
                       cursor: 'pointer',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      borderBottom: '1px solid rgba(0,0,0,0.1)'
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      color: 'var(--text-secondary)',
+                      borderBottom: '1px solid var(--border-subtle)'
                     }}
                   >
                     {m}
@@ -275,7 +305,6 @@ export const ChatPanel: React.FC = () => {
               </div>
             )}
 
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'pulse 2s infinite', flexShrink: 0, marginLeft: '8px' }}></div>
           </div>
         </div>
         
@@ -287,32 +316,52 @@ export const ChatPanel: React.FC = () => {
         }}>
           {messages.map(msg => (
             <div key={msg.id} className="chat-message" style={{
-              display: 'flex', flexDirection: 'column',
-              alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start'
+              display: 'flex',
+              gap: '1rem',
+              alignItems: 'flex-start',
+              flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row',
+              marginBottom: '0.5rem'
             }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                backgroundColor: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--bg-solid)',
+                color: msg.sender === 'user' ? 'var(--bg-solid)' : 'var(--text-primary)',
+                border: msg.sender === 'user' ? 'none' : '1px solid var(--border-subtle)',
+                marginTop: '4px'
+              }}>
+                <i className={`fa-solid ${msg.sender === 'user' ? 'fa-user' : 'fa-robot'}`} style={{ fontSize: '0.8rem' }}></i>
+              </div>
+              
               <div style={{ 
                 padding: '1rem 1.25rem', 
                 maxWidth: '85%', 
-                borderRadius: '0px',
-                backgroundColor: msg.sender === 'user' ? 'var(--ink)' : 'var(--bg)',
-                color: msg.sender === 'user' ? 'var(--bg)' : 'var(--ink)',
-                border: msg.sender === 'user' ? 'none' : '1px solid var(--ink)',
-                boxShadow: msg.sender === 'user' ? '4px 4px 0px var(--surface)' : '4px 4px 0px var(--ink)',
+                width: msg.sender === 'ai' ? '100%' : 'auto',
+                borderRadius: '16px',
+                backgroundColor: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--bg-elevated)',
+                color: msg.sender === 'user' ? 'var(--bg-solid)' : 'var(--text-primary)',
+                border: msg.sender === 'user' ? 'none' : '1px solid var(--border-subtle)',
                 fontSize: '0.95rem',
                 lineHeight: 1.6,
-                fontFamily: 'Inter, sans-serif'
+                fontFamily: 'Inter, sans-serif',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                overflowX: 'auto'
               }}>
-                <ReactMarkdown>{msg.text}</ReactMarkdown>
+                {msg.sender === 'ai' ? (
+                  <AIMessageRenderer content={msg.text} />
+                ) : (
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                )}
               </div>
             </div>
           ))}
           
           {isLoading && (
             <div className="chat-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ padding: '1rem 1.25rem', border: '1px solid var(--ink)', boxShadow: '4px 4px 0px var(--ink)', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'fadeInUp 0.6s ease infinite alternate' }}></div>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'fadeInUp 0.6s ease 0.15s infinite alternate' }}></div>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--ink)', animation: 'fadeInUp 0.6s ease 0.3s infinite alternate' }}></div>
+              <div style={{ padding: '1rem 1.25rem', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-highlight)', animation: 'fadeInUp 0.6s ease infinite alternate' }}></div>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-highlight)', animation: 'fadeInUp 0.6s ease 0.15s infinite alternate' }}></div>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-highlight)', animation: 'fadeInUp 0.6s ease 0.3s infinite alternate' }}></div>
               </div>
             </div>
           )}
@@ -323,22 +372,21 @@ export const ChatPanel: React.FC = () => {
         {/* Input Area */}
         <div style={{
           padding: '1.5rem 2rem',
-          borderTop: '1px solid var(--ink)',
-          backgroundColor: 'var(--surface)'
+          backgroundColor: 'transparent'
         }}>
           {attachedFile && (
             <div style={{
               padding: '0.5rem 1rem', marginBottom: '1rem',
               display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
-              backgroundColor: 'var(--bg)', border: '1px solid var(--ink)',
-              fontSize: '0.85rem', fontFamily: "'JetBrains Mono', monospace",
-              boxShadow: '2px 2px 0px var(--ink)'
+              backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              fontSize: '0.85rem', fontFamily: 'Inter, sans-serif'
             }}>
-              <i className="fa-solid fa-file-code" style={{ color: 'var(--ink)' }}></i>
-              <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{attachedFile.name}</span>
+              <i className="fa-solid fa-file-code" style={{ color: 'var(--text-secondary)' }}></i>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{attachedFile.name}</span>
               <button 
                 onClick={() => setAttachedFile(null)} 
-                style={{ border: 'none', background: 'none', color: 'var(--ink)', cursor: 'pointer', fontSize: '0.85rem' }}
+                style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}
               >
                 <i className="fa-solid fa-xmark"></i>
               </button>
@@ -346,21 +394,25 @@ export const ChatPanel: React.FC = () => {
           )}
           
           <form onSubmit={handleSend} style={{
-            display: 'flex', gap: '0.75rem', alignItems: 'center',
-            backgroundColor: 'var(--bg)', border: '1px solid var(--ink)',
-            padding: '8px',
-            boxShadow: '4px 4px 0px var(--ink)',
+            display: 'flex', gap: '0.5rem', alignItems: 'center',
+            backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+            borderRadius: '30px',
+            padding: '8px 8px 8px 16px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
             flexWrap: 'wrap'
           }}>
             <button 
               type="button"
               onClick={() => fileInputRef.current?.click()}
               style={{
-                width: '44px', height: '44px', padding: 0, flexShrink: 0,
+                width: '36px', height: '36px', padding: 0, flexShrink: 0,
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                border: '1px solid var(--ink)', background: 'var(--surface)',
-                color: 'var(--ink)', cursor: 'pointer', transition: 'all 0.2s ease'
+                border: 'none', background: 'transparent',
+                color: 'var(--text-secondary)', cursor: 'pointer', transition: 'color 0.2s ease',
+                borderRadius: '50%'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               title="Attach File"
             >
               <i className="fa-solid fa-paperclip" style={{ fontSize: '1rem' }}></i>
@@ -379,7 +431,8 @@ export const ChatPanel: React.FC = () => {
               placeholder="Ask the orchestrator..." 
               style={{
                 flex: 1, border: 'none', outline: 'none',
-                background: 'transparent', color: 'var(--ink)',
+                backgroundColor: 'transparent',
+                color: 'var(--text-primary)',
                 fontSize: '1rem', fontFamily: 'Inter, sans-serif',
                 padding: '0.5rem'
               }}
@@ -389,19 +442,17 @@ export const ChatPanel: React.FC = () => {
               type="submit"
               disabled={isLoading}
               style={{
-                height: '44px', padding: '0 1.5rem', flexShrink: 0,
+                width: '40px', height: '40px', flexShrink: 0,
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                border: '1px solid var(--ink)',
-                backgroundColor: 'var(--ink)',
-                color: 'var(--bg)',
+                border: 'none',
+                backgroundColor: 'var(--text-primary)',
+                color: '#080808',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
-                fontWeight: 700, fontSize: '0.85rem',
-                fontFamily: 'Inter, sans-serif',
-                textTransform: 'uppercase', letterSpacing: '0.05em',
-                transition: 'opacity 0.2s ease'
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
               }}
             >
-              {isLoading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <span>SEND</span>}
+              {isLoading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-arrow-up"></i>}
             </button>
           </form>
         </div>

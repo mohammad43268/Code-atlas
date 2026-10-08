@@ -7,28 +7,27 @@
 }
 
 :root {
-  /* CodeAtlas Light Theme Tokens */
-  --bg: #EDEDED;
-  --surface: #D4D4D4;
-  --muted: #8C8C8C;
-  --ink: #0A0A0A;
+  /* Premium Dark Glass Theme Tokens */
+  --bg: rgba(8, 8, 8, 0.75); /* Translucent dark background */
+  --bg-solid: #080808;
+  --surface: rgba(30, 30, 30, 0.6);
+  --muted: #888888;
+  --ink: #FFFFFF;
+  --accent-highlight: #00FFCC; /* High-tech glowing cyan */
 
-  /* We keep a few semantic variables mapped to the new palette to not completely break existing components, 
-     but neutralize them to the light theme. */
-  --bg-primary: var(--bg);
-  --bg-secondary: var(--surface);
+  --bg-primary: var(--bg-solid);
+  --bg-secondary: var(--bg-solid);
   --bg-elevated: var(--surface);
   
-  --border-subtle: var(--muted);
-  --border-strong: var(--ink);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
   
   --text-primary: var(--ink);
-  --text-secondary: var(--ink);
+  --text-secondary: rgba(255, 255, 255, 0.85);
   --text-muted: var(--muted);
   
-  --accent-primary: var(--ink);
-  --accent-hover: var(--surface);
-  --accent-highlight: var(--ink);
+  --accent-primary: var(--accent-highlight);
+  --accent-hover: rgba(0, 255, 204, 0.1);
 }
 
 * {

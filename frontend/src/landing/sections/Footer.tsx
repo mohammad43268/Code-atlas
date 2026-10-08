@@ -11,27 +11,27 @@ export const Footer: React.FC = () => {
     <footer id="footer" className={styles.section} style={{ paddingBottom: '32px' }}>
       <div className={styles.grid} style={{ marginBottom: '64px' }}>
         <div style={{ gridColumn: '1 / 6' }}>
-          <a href={content.footer.repoLink} style={{ color: 'var(--ink)', textDecoration: 'none', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <a href={content.footer.repoLink} style={{ color: 'var(--text-primary)', textDecoration: 'none', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             GitHub Repository ↗
           </a>
         </div>
         <div style={{ gridColumn: '7 / -1', display: 'flex', gap: '32px', justifyContent: 'flex-end' }}>
           {['/', '/docs', '/projects', '/about'].map((path, i) => (
-            <Link key={i} to={path} style={{ color: 'var(--ink)', textDecoration: 'none', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <Link key={i} to={path} style={{ color: 'var(--text-primary)', textDecoration: 'none', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               {path === '/' ? 'Home' : path.replace('/', '')}
             </Link>
           ))}
         </div>
       </div>
       
-      <div ref={containerRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', borderTop: '1px solid rgba(0,0,0,0.1)', paddingTop: '32px' }}>
+      <div ref={containerRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '32px' }}>
         <h2 ref={textRef} className={styles.footerWordmark}>
           CODEATLAS
         </h2>
       </div>
       
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
-        <span style={{ fontSize: '11px', color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           &copy; {content.footer.copyright}
         </span>
       </div>
