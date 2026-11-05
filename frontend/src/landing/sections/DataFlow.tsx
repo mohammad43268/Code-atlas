@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import ScrollTrigger from 'gsap/ScrollTrigger';
 import styles from '../styles/landing.module.css';
 
 export const DataFlow: React.FC = () => {
