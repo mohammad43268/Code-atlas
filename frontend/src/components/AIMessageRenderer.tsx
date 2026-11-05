@@ -16,7 +16,7 @@ export const AIMessageRenderer: React.FC<AIMessageRendererProps> = ({ content })
         rehypePlugins={[rehypeHighlight]}
         components={{
           code(props) {
-            const { children, className, node, ...rest } = props;
+            const { children, className, node: _node, ...rest } = props;
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
             
@@ -103,7 +103,7 @@ const CodeBlock = ({ language, code }: { language: string, code: string }) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy code');
+      console.error('Failed to copy code', err);
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -30,7 +30,7 @@ const WaterQuad = () => {
       uImageStrength: { value: 0.35 },
       uRefract: { value: 0.03 }
     };
-  }, []);
+  }, [size.width, size.height]);
 
   useEffect(() => {
     if (materialRef.current) {
@@ -41,9 +41,9 @@ const WaterQuad = () => {
   const rippleIndex = useRef(0);
   const lastRipplePos = useRef(new THREE.Vector2());
   const lastRippleTime = useRef(0);
-  const lastInteractionTime = useRef(performance.now() / 1000);
+  const lastInteractionTime = useRef(0);
 
-  const spawnRipple = (x: number, y: number, strength: number) => {
+  const spawnRipple = useCallback((x: number, y: number, strength: number) => {
     if (!materialRef.current) return;
     const aspectY = size.height;
     const px = (x - 0.5 * size.width) / aspectY;
@@ -53,7 +53,7 @@ const WaterQuad = () => {
     ripples[rippleIndex.current].set(px, py, time, strength);
     rippleIndex.current = (rippleIndex.current + 1) % 16;
     lastInteractionTime.current = time;
-  };
+  }, [size.height, size.width]);
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
@@ -97,7 +97,7 @@ const WaterQuad = () => {
       window.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('mouseleave', handlePointerLeave);
     };
-  }, [size]);
+  }, [size, spawnRipple]);
 
   useFrame((state, delta) => {
     if (materialRef.current) {
@@ -132,11 +132,15 @@ const WaterQuad = () => {
 };
 
 export const WaterCanvas: React.FC = () => {
-  const [motion, setMotion] = useState(true);
+  const [motion, setMotion] = useState(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+    return true;
+  });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setMotion(!mediaQuery.matches);
     const handler = (e: MediaQueryListEvent) => setMotion(!e.matches);
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
