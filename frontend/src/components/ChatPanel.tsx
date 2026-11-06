@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { AIMessageRenderer } from './AIMessageRenderer';
 import gsap from 'gsap';
 import { Scene } from './Scene';
+import { useOrchestrator } from '../context/useOrchestrator';
 import '../index.css'; // Ensure variables are loaded
 
 interface Message {
@@ -78,8 +79,9 @@ class SceneErrorBoundary extends React.Component<
 }
 
 export const ChatPanel: React.FC = () => {
+  const { pinnedContextNode, setPinnedContextNode, focusNode } = useOrchestrator();
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', sender: 'ai', text: 'Orchestrator online. How can I assist you with this workspace?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    { id: '1', sender: 'ai', text: 'Orchestrator online. 3D spatial mapping active. Click any node in 3D to inspect and pin context.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -192,11 +194,22 @@ export const ChatPanel: React.FC = () => {
     
     const userText = input;
     const filePayload = attachedFile;
+    const currentPinned = pinnedContextNode;
     
     let displayMessage = userText;
+    let contextPrompt = '';
+
+    if (currentPinned) {
+      contextPrompt += `[Active 3D Node: ${currentPinned.path} (${currentPinned.type}${currentPinned.lineCount ? `, ~${currentPinned.lineCount} lines` : ''})]\n`;
+    }
+
     if (filePayload) {
       displayMessage = `📎 [Attached: ${filePayload.name}]\n\n${userText}`;
+    } else if (currentPinned) {
+      displayMessage = `📍 *[3D Context: ${currentPinned.path}]*\n\n${userText}`;
     }
+
+    const finalQuestion = contextPrompt ? `${contextPrompt}\nUser Question: ${userText}` : userText;
 
     const newMsg: Message = { id: Date.now().toString(), sender: 'user', text: displayMessage, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     setMessages(prev => [...prev, newMsg]);
@@ -218,8 +231,8 @@ export const ChatPanel: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          question: userText,
-          fileName: filePayload?.name,
+          question: finalQuestion,
+          fileName: filePayload?.name || (currentPinned ? currentPinned.name : undefined),
           fileContent: filePayload?.content,
           model: selectedModel
         })
@@ -452,7 +465,7 @@ export const ChatPanel: React.FC = () => {
                 overflowX: 'auto'
               }}>
                 {msg.sender === 'ai' ? (
-                  <AIMessageRenderer content={msg.text} />
+                  <AIMessageRenderer content={msg.text} onNodeClick={focusNode} />
                 ) : (
                   <ReactMarkdown>{msg.text}</ReactMarkdown>
                 )}
@@ -478,24 +491,48 @@ export const ChatPanel: React.FC = () => {
           padding: '1.5rem 2rem',
           backgroundColor: 'transparent'
         }}>
-          {attachedFile && (
-            <div style={{
-              padding: '0.5rem 1rem', marginBottom: '1rem',
-              display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
-              backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
-              fontSize: '0.85rem', fontFamily: 'Inter, sans-serif'
-            }}>
-              <i className="fa-solid fa-file-code" style={{ color: 'var(--text-secondary)' }}></i>
-              <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{attachedFile.name}</span>
-              <button 
-                onClick={() => setAttachedFile(null)} 
-                style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: pinnedContextNode || attachedFile ? '0.75rem' : '0' }}>
+            {pinnedContextNode && (
+              <div style={{
+                padding: '0.4rem 0.9rem',
+                display: 'inline-flex', alignItems: 'center', gap: '0.6rem',
+                backgroundColor: 'rgba(0, 255, 204, 0.1)', border: '1px solid var(--accent-highlight)',
+                borderRadius: '8px',
+                fontSize: '0.82rem', fontFamily: 'Inter, sans-serif'
+              }}>
+                <i className="fa-solid fa-thumbtack" style={{ color: 'var(--accent-highlight)' }}></i>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                  3D Node: <strong style={{ color: 'var(--accent-highlight)' }}>{pinnedContextNode.path}</strong>
+                </span>
+                <button 
+                  onClick={() => setPinnedContextNode(null)} 
+                  title="Unpin 3D Context"
+                  style={{ border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            )}
+
+            {attachedFile && (
+              <div style={{
+                padding: '0.4rem 0.9rem',
+                display: 'inline-flex', alignItems: 'center', gap: '0.6rem',
+                backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+                borderRadius: '8px',
+                fontSize: '0.82rem', fontFamily: 'Inter, sans-serif'
+              }}>
+                <i className="fa-solid fa-file-code" style={{ color: 'var(--text-secondary)' }}></i>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{attachedFile.name}</span>
+                <button 
+                  onClick={() => setAttachedFile(null)} 
+                  style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            )}
+          </div>
           
           <form onSubmit={handleSend} style={{
             display: 'flex', gap: '0.5rem', alignItems: 'center',

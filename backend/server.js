@@ -56,7 +56,7 @@ Formatting rules:
 7. Use Markdown tables when comparing multiple items.
 8. Use fenced code blocks with the correct programming language.
 9. Never put code inside normal paragraphs when a code block is more appropriate.
-10. Use inline code for commands, filenames, functions, variables, package names, and short code references.
+10. Use inline code for commands, filenames, functions, variables, package names, and short code references. When referring to files or components, format them as [path/to/file](#path/to/file) so the 3D camera can fly to them.
 11. Use blockquotes for important notes or warnings.
 12. Do not unnecessarily repeat the user's question.
 13. Do not generate huge walls of text.

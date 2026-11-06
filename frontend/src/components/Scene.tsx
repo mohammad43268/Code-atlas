@@ -1,70 +1,10 @@
-import React, { useRef, useMemo, Suspense } from 'react';
+import React, { useRef, useMemo, useEffect, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Float, Text } from '@react-three/drei';
+import { CameraControls, Grid, Stars, Float, Text, useGLTF } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-
-const ROOT_COUNT = 5;
-const CHILDREN_PER_ROOT = 8;
-const RADIUS_ROOT = 3;
-const RADIUS_CHILD = 1.6;
-
-const FOLDER_LABELS = ['src/', 'components/', 'utils/', 'hooks/', 'api/'];
-
-function seededRandom(seed: number) {
-  const x = Math.sin(seed * 9301 + 49297) * 49297;
-  return x - Math.floor(x);
-}
-
-function generateNetwork() {
-  const roots: THREE.Vector3[] = [];
-  const children: { pos: THREE.Vector3 }[] = [];
-  const coreConns: { start: THREE.Vector3; end: THREE.Vector3 }[] = [];
-  const fileConns: { start: THREE.Vector3; end: THREE.Vector3 }[] = [];
-  const flowPaths: { start: THREE.Vector3; end: THREE.Vector3; speed: number; offset: number }[] = [];
-
-  for (let i = 0; i < ROOT_COUNT; i++) {
-    const angle = (i / ROOT_COUNT) * Math.PI * 2;
-    const r = RADIUS_ROOT + Math.sin(i * 1.7) * 0.3;
-    roots.push(new THREE.Vector3(
-      Math.cos(angle) * r,
-      Math.sin(i * 2.3) * 0.6,
-      Math.sin(angle) * r
-    ));
-  }
-
-  for (let i = 0; i < ROOT_COUNT; i++) {
-    coreConns.push({ start: roots[i], end: roots[(i + 1) % ROOT_COUNT] });
-    flowPaths.push({ start: roots[i], end: roots[(i + 1) % ROOT_COUNT], speed: 0.15 + seededRandom(i) * 0.1, offset: i * 0.7 });
-  }
-  coreConns.push({ start: roots[0], end: roots[2] });
-  coreConns.push({ start: roots[1], end: roots[3] });
-  flowPaths.push({ start: roots[0], end: roots[2], speed: 0.12, offset: 0 });
-  flowPaths.push({ start: roots[1], end: roots[3], speed: 0.18, offset: 1.5 });
-
-  for (let i = 0; i < ROOT_COUNT; i++) {
-    for (let j = 0; j < CHILDREN_PER_ROOT; j++) {
-      const phi = Math.acos(-1 + (2 * (j + 0.5)) / CHILDREN_PER_ROOT);
-      const theta = Math.sqrt(CHILDREN_PER_ROOT * Math.PI) * phi;
-      const r = RADIUS_CHILD * (0.4 + seededRandom(i * 100 + j) * 0.6);
-
-      const childPos = roots[i].clone().add(new THREE.Vector3(
-        Math.cos(theta) * Math.sin(phi) * r,
-        Math.sin(theta) * Math.sin(phi) * r,
-        Math.cos(phi) * r
-      ));
-
-      children.push({ pos: childPos });
-      fileConns.push({ start: roots[i], end: childPos });
-
-      if (j % 3 === 0) {
-        flowPaths.push({ start: roots[i], end: childPos, speed: 0.2 + seededRandom(i * 50 + j) * 0.15, offset: j * 0.4 });
-      }
-    }
-  }
-
-  return { roots, children, coreConns, fileConns, flowPaths };
-}
+import { useOrchestrator } from '../context/useOrchestrator';
+import type { RepoNode } from '../types/orchestrator';
 
 function FolderModel({ position }: { position: [number, number, number] }) {
   const { scene } = useGLTF('/folder.glb');
@@ -72,41 +12,80 @@ function FolderModel({ position }: { position: [number, number, number] }) {
   return <primitive object={clone} position={position} scale={0.35} rotation={[Math.PI / 2, 0, 0]} />;
 }
 
-function FolderNode({ position, label }: { position: [number, number, number]; label: string }) {
+function FolderNode({ node }: { node: RepoNode }) {
+  const { selectedNode, hoveredNode, setHoveredNode, focusNode } = useOrchestrator();
+  const isSelected = selectedNode?.id === node.id;
+  const isHovered = hoveredNode?.id === node.id;
+
   return (
-    <Float speed={1} rotationIntensity={0.2} floatIntensity={0.4}>
-      <group>
-        <Suspense fallback={
-          <mesh position={position}>
-            <boxGeometry args={[0.5, 0.35, 0.05]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.1} />
-          </mesh>
-        }>
-          <FolderModel position={position} />
+    <Float speed={1.2} rotationIntensity={0.25} floatIntensity={0.5}>
+      <group
+        position={node.position}
+        onClick={(e) => {
+          e.stopPropagation();
+          focusNode(node.id);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHoveredNode(node);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          setHoveredNode(null);
+          document.body.style.cursor = 'default';
+        }}
+      >
+        <Suspense
+          fallback={
+            <mesh>
+              <boxGeometry args={[0.5, 0.35, 0.05]} />
+              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.15} />
+            </mesh>
+          }
+        >
+          <FolderModel position={[0, 0, 0]} />
         </Suspense>
+
+        {/* Selection / Hover Indicator Ring */}
+        {(isSelected || isHovered) && (
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.55, 0.62, 32]} />
+            <meshBasicMaterial
+              color={isSelected ? 'var(--accent-highlight)' : '#ffffff'}
+              side={THREE.DoubleSide}
+              transparent
+              opacity={0.8}
+            />
+          </mesh>
+        )}
+
         <Text
-          position={[position[0], position[1] - 0.55, position[2]]}
-          fontSize={0.15}
-          color="#999999"
+          position={[0, -0.55, 0]}
+          fontSize={0.16}
+          color={isSelected ? '#00ffcc' : isHovered ? '#ffffff' : '#aaaaaa'}
           anchorX="center"
           anchorY="top"
-          outlineWidth={0.005}
+          outlineWidth={0.006}
           outlineColor="black"
         >
-          {label}
+          {node.name}
         </Text>
       </group>
     </Float>
   );
 }
 
-function FileNode({ position }: { position: [number, number, number] }) {
-  const geometry = useMemo(() => {
+function FileNode({ node }: { node: RepoNode }) {
+  const { selectedNode, hoveredNode, setHoveredNode, focusNode } = useOrchestrator();
+  const isSelected = selectedNode?.id === node.id;
+  const isHovered = hoveredNode?.id === node.id;
+
+  const shapeGeometry = useMemo(() => {
     const shape = new THREE.Shape();
     const w = 0.12;
     const h = 0.16;
     const fold = 0.04;
-    
+
     shape.moveTo(-w / 2, -h / 2);
     shape.lineTo(w / 2, -h / 2);
     shape.lineTo(w / 2, h / 2 - fold);
@@ -116,24 +95,67 @@ function FileNode({ position }: { position: [number, number, number] }) {
     return new THREE.ShapeGeometry(shape);
   }, []);
 
+  const scale = isSelected ? 1.4 : isHovered ? 1.25 : 1.0;
+
   return (
-    <group position={position}>
-      <mesh geometry={geometry}>
-        <meshStandardMaterial 
-          color="#e0e0e0" 
-          emissive="#ffffff" 
-          emissiveIntensity={0.15} 
-          side={THREE.DoubleSide} 
+    <group
+      position={node.position}
+      scale={[scale, scale, scale]}
+      onClick={(e) => {
+        e.stopPropagation();
+        focusNode(node.id);
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHoveredNode(node);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setHoveredNode(null);
+        document.body.style.cursor = 'default';
+      }}
+    >
+      <mesh geometry={shapeGeometry}>
+        <meshStandardMaterial
+          color={node.color}
+          emissive={node.color}
+          emissiveIntensity={isSelected ? 0.6 : isHovered ? 0.35 : 0.12}
+          side={THREE.DoubleSide}
         />
       </mesh>
+
+      {/* Decorative file lines */}
       <mesh position={[0, 0.01, 0.001]}>
         <planeGeometry args={[0.06, 0.005]} />
-        <meshBasicMaterial color="#999999" side={THREE.DoubleSide} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.6} side={THREE.DoubleSide} />
       </mesh>
       <mesh position={[0, -0.015, 0.001]}>
         <planeGeometry args={[0.06, 0.005]} />
-        <meshBasicMaterial color="#999999" side={THREE.DoubleSide} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.6} side={THREE.DoubleSide} />
       </mesh>
+
+      {/* Selection halo */}
+      {isSelected && (
+        <mesh position={[0, 0, -0.002]}>
+          <planeGeometry args={[0.18, 0.22]} />
+          <meshBasicMaterial color="#00ffcc" wireframe transparent opacity={0.7} />
+        </mesh>
+      )}
+
+      {/* Label on hover or selected */}
+      {(isHovered || isSelected) && (
+        <Text
+          position={[0, -0.16, 0]}
+          fontSize={0.09}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="top"
+          outlineWidth={0.004}
+          outlineColor="black"
+        >
+          {node.name}
+        </Text>
+      )}
     </group>
   );
 }
@@ -150,9 +172,9 @@ function ConnectionLine({ start, end, isCore }: { start: THREE.Vector3; end: THR
   return (
     <lineSegments geometry={geometry}>
       <lineBasicMaterial
-        color={isCore ? '#ffffff' : '#555555'}
+        color={isCore ? '#ffffff' : '#666666'}
         transparent
-        opacity={isCore ? 0.3 : 0.12}
+        opacity={isCore ? 0.35 : 0.14}
       />
     </lineSegments>
   );
@@ -160,89 +182,140 @@ function ConnectionLine({ start, end, isCore }: { start: THREE.Vector3; end: THR
 
 function DataFlow({ start, end, speed, offset }: { start: THREE.Vector3; end: THREE.Vector3; speed: number; offset: number }) {
   const meshRef = useRef<THREE.Mesh>(null!);
+  const { dataFlowSpeed } = useOrchestrator();
 
   useFrame((state) => {
     if (meshRef.current) {
-      const raw = ((state.clock.elapsedTime * speed + offset) % 2);
-      const t = raw > 1 ? 2 - raw : raw; 
+      const adjustedSpeed = speed * dataFlowSpeed;
+      const raw = ((state.clock.elapsedTime * adjustedSpeed + offset) % 2);
+      const t = raw > 1 ? 2 - raw : raw;
       meshRef.current.position.lerpVectors(start, end, t);
     }
   });
 
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[0.018, 8, 8]} />
-      <meshBasicMaterial color={[1.5, 1.5, 2]} toneMapped={false} transparent opacity={0.8} />
+      <sphereGeometry args={[0.022, 8, 8]} />
+      <meshBasicMaterial color={[1.8, 1.8, 2.5]} toneMapped={false} transparent opacity={0.85} />
     </mesh>
   );
 }
 
-function FileNetwork() {
+function CameraFlightController() {
+  const { cameraTarget, autoRotate } = useOrchestrator();
+  const controlsRef = useRef<CameraControls>(null!);
+
+  useEffect(() => {
+    if (!controlsRef.current || !cameraTarget) return;
+    const { eye, target } = cameraTarget;
+    controlsRef.current.setLookAt(
+      eye[0], eye[1], eye[2],
+      target[0], target[1], target[2],
+      true
+    );
+  }, [cameraTarget]);
+
+  useFrame((_, delta) => {
+    if (controlsRef.current && autoRotate) {
+      controlsRef.current.azimuthAngle += 0.08 * delta;
+    }
+  });
+
+  return (
+    <CameraControls
+      ref={controlsRef}
+      minDistance={2.5}
+      maxDistance={25}
+      smoothTime={0.8}
+    />
+  );
+}
+
+function DynamicRepositoryGraph() {
+  const { graph } = useOrchestrator();
   const groupRef = useRef<THREE.Group>(null!);
-  const data = useMemo(() => generateNetwork(), []);
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.03;
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.02;
     }
   });
 
   return (
     <group ref={groupRef}>
-      {data.roots.map((pos, i) => (
-        <FolderNode key={`f-${i}`} position={[pos.x, pos.y, pos.z]} label={FOLDER_LABELS[i]} />
+      {/* Folder Nodes */}
+      {graph.nodes.filter(n => n.type === 'folder').map(node => (
+        <FolderNode key={node.id} node={node} />
       ))}
 
-      {data.children.map((c, i) => (
-        <FileNode key={`c-${i}`} position={[c.pos.x, c.pos.y, c.pos.z]} />
+      {/* File Nodes */}
+      {graph.nodes.filter(n => n.type === 'file').map(node => (
+        <FileNode key={node.id} node={node} />
       ))}
 
-      {data.coreConns.map((conn, i) => (
-        <ConnectionLine key={`cc-${i}`} start={conn.start} end={conn.end} isCore={true} />
+      {/* Interconnections */}
+      {graph.connections.map(conn => (
+        <ConnectionLine key={conn.id} start={conn.start} end={conn.end} isCore={conn.isCore} />
       ))}
 
-      {data.fileConns.map((conn, i) => (
-        <ConnectionLine key={`fc-${i}`} start={conn.start} end={conn.end} isCore={false} />
-      ))}
-
-      {data.flowPaths.map((fp, i) => (
-        <DataFlow key={`df-${i}`} start={fp.start} end={fp.end} speed={fp.speed} offset={fp.offset} />
+      {/* Realtime Data Flows */}
+      {graph.flowPaths.map(fp => (
+        <DataFlow key={fp.id} start={fp.start} end={fp.end} speed={fp.speed} offset={fp.offset} />
       ))}
     </group>
   );
 }
 
 export const Scene: React.FC = () => {
+  const { showGrid, resetCamera } = useOrchestrator();
+
   return (
     <Canvas
       camera={{ position: [0, 2, 9], fov: 50 }}
       style={{ width: '100%', height: '100%', cursor: 'grab', background: '#080808' }}
       gl={{ antialias: true, alpha: false }}
+      onPointerMissed={(e) => {
+        if (e.type === 'click') resetCamera();
+      }}
     >
       <color attach="background" args={['#080808']} />
 
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[5, 6, 4]} intensity={1.2} color="#ffffff" />
-      <directionalLight position={[-4, 2, -3]} intensity={0.4} color="#c0c8e0" />
-      <directionalLight position={[0, -3, -5]} intensity={0.3} color="#e0e0ff" />
-      <pointLight position={[0, 0, 0]} intensity={0.6} color="#ffffff" distance={8} decay={2} />
+      {/* Atmospheric Starfield */}
+      <Stars radius={50} depth={40} count={1400} factor={3.5} saturation={0} fade speed={0.6} />
 
-      <FileNetwork />
+      {/* Lighting */}
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[6, 8, 5]} intensity={1.3} color="#ffffff" />
+      <directionalLight position={[-5, 3, -4]} intensity={0.5} color="#80d8ff" />
+      <directionalLight position={[0, -4, -6]} intensity={0.3} color="#ea80fc" />
+      <pointLight position={[0, 0, 0]} intensity={0.8} color="#00e5ff" distance={10} decay={2} />
 
+      {/* Dynamic Repository Hierarchy */}
+      <DynamicRepositoryGraph />
+
+      {/* Sci-Fi Grid Plane */}
+      {showGrid && (
+        <Grid
+          position={[0, -4.2, 0]}
+          args={[60, 60]}
+          infiniteGrid
+          sectionSize={3}
+          sectionColor="#00e5ff"
+          sectionThickness={1.2}
+          cellColor="#1c1c1c"
+          cellThickness={0.7}
+          fadeDistance={30}
+          fadeStrength={1.4}
+        />
+      )}
+
+      {/* Cinematic Post-Processing */}
       <EffectComposer enableNormalPass={false}>
-        <Bloom luminanceThreshold={1} mipmapBlur intensity={0.6} radius={0.5} />
+        <Bloom luminanceThreshold={1} mipmapBlur intensity={0.55} radius={0.45} />
       </EffectComposer>
 
-      <OrbitControls
-        enablePan={false}
-        enableZoom={true}
-        minDistance={4}
-        maxDistance={18}
-        autoRotate
-        autoRotateSpeed={0.2}
-        dampingFactor={0.05}
-        enableDamping
-      />
+      {/* Camera Flight & Damped Orbit Controller */}
+      <CameraFlightController />
     </Canvas>
   );
 };

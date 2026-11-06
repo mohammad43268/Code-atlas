@@ -6,9 +6,10 @@ import 'highlight.js/styles/github-dark.css';
 
 interface AIMessageRendererProps {
   content: string;
+  onNodeClick?: (path: string) => void;
 }
 
-export const AIMessageRenderer: React.FC<AIMessageRendererProps> = ({ content }) => {
+export const AIMessageRenderer: React.FC<AIMessageRendererProps> = ({ content, onNodeClick }) => {
   return (
     <div className="ai-message-markdown">
       <ReactMarkdown
@@ -73,6 +74,33 @@ export const AIMessageRenderer: React.FC<AIMessageRendererProps> = ({ content })
             );
           },
           a({ children, href }) {
+            const isLocalRef = href?.startsWith('#') || href?.startsWith('file:') || href?.startsWith('node:');
+            if (isLocalRef && onNodeClick) {
+              const target = (href || '').replace(/^(#|file:|node:)/, '');
+              return (
+                <button
+                  type="button"
+                  onClick={() => onNodeClick(target)}
+                  style={{
+                    background: 'rgba(0, 255, 204, 0.12)',
+                    border: '1px solid var(--accent-highlight)',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                    color: 'var(--accent-highlight)',
+                    cursor: 'pointer',
+                    fontSize: '0.85em',
+                    fontFamily: 'monospace',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <i className="fa-solid fa-location-crosshairs" style={{ fontSize: '0.75rem' }}></i>
+                  <span>{children}</span>
+                </button>
+              );
+            }
+
             return (
               <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-highlight)', textDecoration: 'underline' }}>
                 {children}
