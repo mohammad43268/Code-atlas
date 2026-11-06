@@ -11,32 +11,6 @@ const RADIUS_CHILD = 1.6;
 
 const FOLDER_LABELS = ['src/', 'components/', 'utils/', 'hooks/', 'api/'];
 
-// Pre-allocate shared geometries and materials for leaf nodes to eliminate draw overhead
-const fileShape = (() => {
-  const shape = new THREE.Shape();
-  const w = 0.12;
-  const h = 0.16;
-  const fold = 0.04;
-
-  shape.moveTo(-w / 2, -h / 2);
-  shape.lineTo(w / 2, -h / 2);
-  shape.lineTo(w / 2, h / 2 - fold);
-  shape.lineTo(w / 2 - fold, h / 2);
-  shape.lineTo(-w / 2, h / 2);
-  shape.closePath();
-  return shape;
-})();
-
-const fileCardGeometry = new THREE.ShapeGeometry(fileShape);
-const fileCardMaterial = new THREE.MeshStandardMaterial({
-  color: '#e0e0e0',
-  emissive: '#ffffff',
-  emissiveIntensity: 0.15,
-  side: THREE.DoubleSide
-});
-const fileLineGeometry = new THREE.PlaneGeometry(0.06, 0.005);
-const fileLineMaterial = new THREE.MeshBasicMaterial({ color: '#999999', side: THREE.DoubleSide });
-
 function seededRandom(seed: number) {
   const x = Math.sin(seed * 9301 + 49297) * 49297;
   return x - Math.floor(x);
@@ -127,12 +101,60 @@ function FolderNode({ position, label }: { position: [number, number, number]; l
 }
 
 function FileNode({ position }: { position: [number, number, number] }) {
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    const w = 0.12;
+    const h = 0.16;
+    const fold = 0.04;
+    
+    shape.moveTo(-w / 2, -h / 2);
+    shape.lineTo(w / 2, -h / 2);
+    shape.lineTo(w / 2, h / 2 - fold);
+    shape.lineTo(w / 2 - fold, h / 2);
+    shape.lineTo(-w / 2, h / 2);
+    shape.closePath();
+    return new THREE.ShapeGeometry(shape);
+  }, []);
+
   return (
     <group position={position}>
-      <mesh geometry={fileCardGeometry} material={fileCardMaterial} />
-      <mesh geometry={fileLineGeometry} material={fileLineMaterial} position={[0, 0.01, 0.001]} />
-      <mesh geometry={fileLineGeometry} material={fileLineMaterial} position={[0, -0.015, 0.001]} />
+      <mesh geometry={geometry}>
+        <meshStandardMaterial 
+          color="#e0e0e0" 
+          emissive="#ffffff" 
+          emissiveIntensity={0.15} 
+          side={THREE.DoubleSide} 
+        />
+      </mesh>
+      <mesh position={[0, 0.01, 0.001]}>
+        <planeGeometry args={[0.06, 0.005]} />
+        <meshBasicMaterial color="#999999" side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, -0.015, 0.001]}>
+        <planeGeometry args={[0.06, 0.005]} />
+        <meshBasicMaterial color="#999999" side={THREE.DoubleSide} />
+      </mesh>
     </group>
+  );
+}
+
+function ConnectionLine({ start, end, isCore }: { start: THREE.Vector3; end: THREE.Vector3; isCore: boolean }) {
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(
+      new Float32Array([start.x, start.y, start.z, end.x, end.y, end.z]), 3
+    ));
+    return geo;
+  }, [start, end]);
+
+  return (
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial
+        color={isCore ? '#ffffff' : '#555555'}
+        transparent
+        opacity={isCore ? 0.3 : 0.12}
+      />
+    </lineSegments>
   );
 }
 
@@ -159,27 +181,6 @@ function FileNetwork() {
   const groupRef = useRef<THREE.Group>(null!);
   const data = useMemo(() => generateNetwork(), []);
 
-  // Batched line geometries to reduce 47 draw calls to 2
-  const coreLinesGeo = useMemo(() => {
-    const positions: number[] = [];
-    data.coreConns.forEach((c) => {
-      positions.push(c.start.x, c.start.y, c.start.z, c.end.x, c.end.y, c.end.z);
-    });
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    return geo;
-  }, [data.coreConns]);
-
-  const fileLinesGeo = useMemo(() => {
-    const positions: number[] = [];
-    data.fileConns.forEach((c) => {
-      positions.push(c.start.x, c.start.y, c.start.z, c.end.x, c.end.y, c.end.z);
-    });
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    return geo;
-  }, [data.fileConns]);
-
   useFrame((state) => {
     if (groupRef.current) {
       groupRef.current.rotation.y = state.clock.elapsedTime * 0.03;
@@ -196,13 +197,13 @@ function FileNetwork() {
         <FileNode key={`c-${i}`} position={[c.pos.x, c.pos.y, c.pos.z]} />
       ))}
 
-      <lineSegments geometry={coreLinesGeo}>
-        <lineBasicMaterial color="#ffffff" transparent opacity={0.3} />
-      </lineSegments>
+      {data.coreConns.map((conn, i) => (
+        <ConnectionLine key={`cc-${i}`} start={conn.start} end={conn.end} isCore={true} />
+      ))}
 
-      <lineSegments geometry={fileLinesGeo}>
-        <lineBasicMaterial color="#555555" transparent opacity={0.12} />
-      </lineSegments>
+      {data.fileConns.map((conn, i) => (
+        <ConnectionLine key={`fc-${i}`} start={conn.start} end={conn.end} isCore={false} />
+      ))}
 
       {data.flowPaths.map((fp, i) => (
         <DataFlow key={`df-${i}`} start={fp.start} end={fp.end} speed={fp.speed} offset={fp.offset} />
@@ -211,12 +212,12 @@ function FileNetwork() {
   );
 }
 
-export const Scene = React.memo(() => {
+export const Scene: React.FC = () => {
   return (
     <Canvas
       camera={{ position: [0, 2, 9], fov: 50 }}
-      style={{ width: '100%', height: '100%', cursor: 'grab' }}
-      gl={{ antialias: true }}
+      style={{ width: '100%', height: '100%', cursor: 'grab', background: '#080808' }}
+      gl={{ antialias: true, alpha: false }}
     >
       <color attach="background" args={['#080808']} />
 
@@ -228,7 +229,7 @@ export const Scene = React.memo(() => {
 
       <FileNetwork />
 
-      <EffectComposer>
+      <EffectComposer enableNormalPass={false}>
         <Bloom luminanceThreshold={1} mipmapBlur intensity={0.6} radius={0.5} />
       </EffectComposer>
 
@@ -244,9 +245,4 @@ export const Scene = React.memo(() => {
       />
     </Canvas>
   );
-});
-
-Scene.displayName = 'Scene';
-
-// Preload 3D assets
-useGLTF.preload('/folder.glb');
+};

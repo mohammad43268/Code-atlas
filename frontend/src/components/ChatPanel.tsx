@@ -17,6 +17,66 @@ interface AttachedFile {
   content: string;
 }
 
+class SceneErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any) {
+    console.error('ThreeJS Scene Error:', error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#080808',
+            color: 'var(--text-secondary)',
+            gap: '1rem',
+            fontFamily: 'Inter, sans-serif'
+          }}
+        >
+          <i
+            className="fa-solid fa-cube"
+            style={{ fontSize: '2rem', color: 'var(--accent-highlight)' }}
+          ></i>
+          <span>3D Space encountered a render glitch.</span>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            style={{
+              padding: '8px 18px',
+              backgroundColor: 'var(--bg-elevated)',
+              color: 'var(--ink)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.85rem'
+            }}
+          >
+            Restart 3D Scene
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export const ChatPanel: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', sender: 'ai', text: 'Orchestrator online. How can I assist you with this workspace?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
@@ -218,8 +278,19 @@ export const ChatPanel: React.FC = () => {
   return (
     <div className="responsive-stack" style={{ height: '100vh', width: '100%', display: 'flex', backgroundColor: 'var(--bg)' }}>
       
-      <div className="mobile-scene" style={{ width: `${100 - chatWidth}%`, height: '100%', position: 'relative', overflow: 'hidden' }}>
-        <Scene />
+      <div
+        className="mobile-scene"
+        style={{
+          width: `${100 - chatWidth}%`,
+          height: '100%',
+          position: 'relative',
+          overflow: 'hidden',
+          backgroundColor: '#080808'
+        }}
+      >
+        <SceneErrorBoundary>
+          <Scene />
+        </SceneErrorBoundary>
         <div style={{
           position: 'absolute', bottom: '1.5rem', left: '2rem',
           pointerEvents: 'none', zIndex: 10, opacity: 0.8
