@@ -31,12 +31,14 @@ export const ChatPanel: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Animate newly added messages without re-querying DOM on every streaming token chunk
   useEffect(() => {
     scrollToBottom();
     
@@ -46,26 +48,56 @@ export const ChatPanel: React.FC = () => {
         gsap.fromTo(
           newMsgElements,
           { y: 15, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out', stagger: 0.05 }
+          { y: 0, opacity: 1, duration: 0.4, ease: 'power3.out', stagger: 0.05 }
         );
         newMsgElements.forEach(el => el.classList.add('animated'));
       }
     }
+  }, [messages.length]);
+
+  // Keep view scrolled down during active AI streaming
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Close dropdown on outside click
   useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isDropdownOpen]);
+
+  // RAF-throttled smooth split-pane dragging
+  useEffect(() => {
+    let rafId: number | null = null;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging.current) return;
-      const newChatWidth = 100 - (e.clientX / window.innerWidth) * 100;
-      if (newChatWidth > 20 && newChatWidth < 75) {
-        setChatWidth(newChatWidth);
-      }
+      if (rafId !== null) return;
+
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const newChatWidth = 100 - (e.clientX / window.innerWidth) * 100;
+        if (newChatWidth > 20 && newChatWidth < 75) {
+          setChatWidth(newChatWidth);
+        }
+      });
     };
 
     const handleMouseUp = () => {
       if (isDragging.current) {
         isDragging.current = false;
         document.body.style.cursor = 'default';
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
       }
     };
 
@@ -75,6 +107,7 @@ export const ChatPanel: React.FC = () => {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -242,7 +275,7 @@ export const ChatPanel: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 200px' }}>
             {/* Header left empty to match minimalist chat interface */}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0, position: 'relative' }}>
+          <div ref={dropdownRef} style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0, position: 'relative' }}>
             <div 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               style={{
