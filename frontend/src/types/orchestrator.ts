@@ -42,3 +42,4 @@ export interface RepoGraph {
   totalFiles: number;
   totalFolders: number;
 }
+
