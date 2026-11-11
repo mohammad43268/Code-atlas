@@ -1,30 +1,32 @@
 .section {
-  padding: clamp(96px, 14vw, 200px) clamp(16px, 4vw, 24px);
+  padding: clamp(72px, 9vw, 150px) clamp(16px, 4vw, 40px);
   width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   box-sizing: border-box;
   background-color: transparent;
   color: var(--ink);
   position: relative;
+  overflow-x: clip;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 24px;
 }
 
 .hairline {
   height: 1px;
-  background-color: var(--muted);
-  opacity: 0.3;
+  background-color: var(--border-subtle);
   width: 100%;
 }
 
 .label {
-  font-family: inherit;
-  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   color: var(--muted);
   font-weight: 500;
   margin-bottom: 2rem;
@@ -32,9 +34,9 @@
 
 .displayHeadline {
   font-family: 'Comvota', sans-serif;
-  font-size: clamp(40px, 7vw, 120px);
+  font-size: clamp(36px, 5.5vw, 100px);
   color: var(--ink);
-  line-height: 0.9;
+  line-height: 0.95;
   font-weight: 300;
   text-transform: uppercase;
   margin: 0;
@@ -43,9 +45,9 @@
 
 .bodyText {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(18px, 1.5vw, 24px);
-  color: var(--ink);
-  line-height: 1.4;
+  font-size: clamp(15px, 1.3vw, 19px);
+  color: var(--text-secondary);
+  line-height: 1.6;
   margin: 0;
   font-weight: 400;
 }
@@ -61,31 +63,32 @@
   white-space: nowrap;
 }
 
-/* Feature specific */
 .featureFrame {
   width: 100%;
   aspect-ratio: 16 / 10;
-  background-color: var(--surface);
-  border: 1px solid var(--muted);
-  border-radius: 4px;
+  background-color: rgba(10, 12, 16, 0.9);
+  border: 1px solid var(--border-subtle);
 }
 
 .statusLabel {
-  display: inline-block;
-  padding: 4px 8px;
-  border: 1px solid var(--muted);
-  border-radius: 999px;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
   margin-bottom: 1rem;
 }
 
 /* Responsive Overrides */
-@media (max-width: 719px) {
+@media (max-width: 900px) {
   .grid {
-    grid-template-columns: 1fr;
-    gap: 48px;
+    grid-template-columns: 1fr !important;
+    gap: 36px;
   }
 }
