@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import styles from '../styles/landing.module.css';
 
 export const DataFlow: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
@@ -13,185 +12,349 @@ export const DataFlow: React.FC = () => {
 
     const ctx = gsap.context(() => {
       const panels = gsap.utils.toArray('.horizontal-panel');
-      
+
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           pin: true,
           scrub: 1,
           snap: 1 / (panels.length - 1),
-          // Scroll distance equals the width of all panels to feel natural 1:1
-          end: () => "+=" + containerRef.current!.offsetWidth * (panels.length - 1)
+          end: () => '+=' + containerRef.current!.offsetWidth * (panels.length - 1)
         }
       });
 
-      // Move the panels
-      tl.to(panels, {
-        xPercent: -100 * (panels.length - 1),
-        ease: "none"
-      }, 0);
+      tl.to(
+        panels,
+        {
+          xPercent: -100 * (panels.length - 1),
+          ease: 'none'
+        },
+        0
+      );
 
-      // Move the data packet across the entire width of the track
-      // The track is 200vw long (from center of panel 1 to center of panel 3)
       if (packetRef.current) {
-        tl.to(packetRef.current, {
-          x: '200vw', 
-          ease: "none"
-        }, 0);
+        tl.to(
+          packetRef.current,
+          {
+            x: '200vw',
+            ease: 'none'
+          },
+          0
+        );
       }
-
     }, containerRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={containerRef} aria-labelledby="data-flow-heading" style={{ 
-      overflow: 'hidden', 
-      width: '100%', 
-      height: '100vh', 
-      backgroundColor: 'transparent', 
-      position: 'relative' 
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        width: '300vw', 
-        height: '100%',
-        willChange: 'transform',
-        position: 'relative'
-      }}>
-        
-        {/* The Connection Track spanning from center of panel 1 to center of panel 3 */}
-        <div style={{
-          position: 'absolute',
-          top: '65%',
-          left: '50vw',
-          width: '200vw',
-          height: '2px',
-          backgroundColor: 'var(--ink)',
-          opacity: 0.2,
-          zIndex: 0
-        }} />
-
-        {/* The Traveling Data Packet */}
-        <div ref={packetRef} style={{
-          position: 'absolute',
-          top: '65%',
-          left: '50vw',
-          width: '20px',
-          height: '20px',
-          backgroundColor: 'var(--ink)',
-          borderRadius: '0%', // brutalist square
-          transform: 'translate(-50%, -50%)',
-          zIndex: 2,
-          boxShadow: '4px 4px 0px rgba(0,0,0,0.2)',
+    <section
+      ref={containerRef}
+      aria-labelledby="data-flow-heading"
+      style={{
+        overflow: 'hidden',
+        width: '100%',
+        height: '100vh',
+        backgroundColor: '#040507',
+        position: 'relative',
+        borderTop: '1px solid var(--border-subtle)',
+        borderBottom: '1px solid var(--border-subtle)'
+      }}
+    >
+      <div
+        style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{ width: '8px', height: '8px', backgroundColor: 'var(--bg)', animation: 'pulse 1s infinite alternate' }} />
+          width: '300vw',
+          height: '100%',
+          willChange: 'transform',
+          position: 'relative'
+        }}
+      >
+        {/* Laser Data Bus Connection Track */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '64%',
+            left: '50vw',
+            width: '200vw',
+            height: '1px',
+            backgroundColor: 'rgba(0, 255, 204, 0.25)',
+            boxShadow: '0 0 12px rgba(0, 255, 204, 0.4)',
+            zIndex: 1
+          }}
+        />
+
+        {/* Traveling Cyan Photon Packet */}
+        <div
+          ref={packetRef}
+          style={{
+            position: 'absolute',
+            top: '64%',
+            left: '50vw',
+            width: '18px',
+            height: '18px',
+            backgroundColor: '#050608',
+            border: '1px solid var(--accent-highlight)',
+            boxShadow: '0 0 16px rgba(0, 255, 204, 0.8)',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div
+            style={{
+              width: '6px',
+              height: '6px',
+              backgroundColor: 'var(--accent-highlight)',
+              animation: 'cyanPulse 1s infinite ease-in-out'
+            }}
+          />
         </div>
 
-        {/* Panel 1 */}
-        <div className="horizontal-panel" style={{ width: '100vw', height: '100%', position: 'relative', padding: 'clamp(16px, 4vw, 24px)' }}>
-          <div className="outline-number" style={{ top: '5vh', left: '5vw', opacity: 0.05, color: 'transparent', WebkitTextStroke: '4px var(--ink)' }}>01</div>
-          <div style={{ position: 'absolute', top: '15vh', left: '10vw', maxWidth: '600px', zIndex: 10 }}>
-            <div className={styles.label} id="data-flow-heading" style={{ marginBottom: '24px' }}>Data Flow</div>
-            <h2 className={styles.displayHeadline} style={{ fontSize: 'clamp(32px, 5vw, 64px)', marginBottom: '24px' }}>
-              Phase 1: Ingestion
-            </h2>
-            <p className={styles.bodyText}>
-              We connect to your GitHub repository and pull the raw AST, treating code not as plain text but as a highly structured entity.
-            </p>
-          </div>
-          {/* Node Box */}
-          <div style={{
-            position: 'absolute',
-            top: '65%',
-            left: '50vw',
-            transform: 'translate(-50%, -50%)',
-            width: '180px',
-            height: '180px',
-            border: '2px solid var(--ink)',
-            backgroundColor: 'var(--surface)',
+        {/* Panel 1: Ingestion */}
+        <div
+          className="horizontal-panel"
+          style={{
+            width: '100vw',
+            height: '100%',
+            position: 'relative',
+            padding: 'clamp(24px, 5vw, 64px)',
+            boxSizing: 'border-box',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1,
-            boxShadow: '12px 12px 0px var(--ink)'
-          }}>
-            <i className="fa-brands fa-github" style={{ fontSize: '3rem', marginBottom: '1rem', color: 'var(--ink)' }}></i>
-            <span className="tech-label" style={{ backgroundColor: 'var(--bg)' }}>AST_EXTRACT</span>
+            justifyContent: 'space-between'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="technical-meta">[PIPELINE 01/03 // INGESTION]</span>
+            <span className="technical-badge technical-badge-cyan">PARSER: TREE-SITTER</span>
           </div>
-        </div>
 
-        {/* Panel 2 */}
-        <div className="horizontal-panel" style={{ width: '100vw', height: '100%', position: 'relative', padding: 'clamp(16px, 4vw, 24px)' }}>
-          <div className="outline-number" style={{ top: '5vh', left: '5vw', opacity: 0.05, color: 'transparent', WebkitTextStroke: '4px var(--ink)' }}>02</div>
-          <div style={{ position: 'absolute', top: '15vh', left: '10vw', maxWidth: '600px', zIndex: 10 }}>
-            <h2 className={styles.displayHeadline} style={{ fontSize: 'clamp(32px, 5vw, 64px)', marginBottom: '24px' }}>
-              Phase 2: Graph Mapping
+          <div style={{ maxWidth: '640px', zIndex: 10 }}>
+            <h2
+              id="data-flow-heading"
+              style={{
+                fontFamily: 'Comvota, sans-serif',
+                fontSize: 'clamp(32px, 4.5vw, 72px)',
+                lineHeight: 0.95,
+                color: 'var(--ink)',
+                textTransform: 'uppercase',
+                margin: '0 0 20px 0'
+              }}
+            >
+              Phase 1: Recursive AST Ingestion
             </h2>
-            <p className={styles.bodyText}>
-              Functions, classes, and dependencies are mapped into a massive graph. This abstract web of relations allows us to see how everything connects.
+            <p
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 'clamp(15px, 1.3vw, 19px)',
+                lineHeight: 1.6,
+                color: 'var(--text-secondary)',
+                margin: 0
+              }}
+            >
+              Connect any public or private GitHub repository. CodeAtlas streams the Git object tree and builds language ASTs, extracting symbols, imports, and interface boundaries.
             </p>
           </div>
+
           {/* Node Box */}
-          <div style={{
-            position: 'absolute',
-            top: '65%',
-            left: '50vw',
-            transform: 'translate(-50%, -50%)',
-            width: '180px',
-            height: '180px',
-            border: '2px solid var(--ink)',
-            backgroundColor: 'var(--surface)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1,
-            boxShadow: '12px 12px 0px var(--ink)'
-          }}>
-            <i className="fa-solid fa-project-diagram" style={{ fontSize: '3rem', marginBottom: '1rem', color: 'var(--ink)' }}></i>
-            <span className="tech-label" style={{ backgroundColor: 'var(--bg)' }}>GRAPH_BUILD</span>
+          <div
+            className="tactile-panel"
+            style={{
+              position: 'absolute',
+              top: '64%',
+              left: '50vw',
+              transform: 'translate(-50%, -50%)',
+              width: '190px',
+              height: '190px',
+              backgroundColor: 'rgba(8, 10, 14, 0.95)',
+              border: '1px solid var(--accent-highlight)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2,
+              boxShadow: '0 0 32px rgba(0, 255, 204, 0.15)'
+            }}
+          >
+            <i className="fa-brands fa-github" style={{ fontSize: '2.5rem', marginBottom: '12px', color: 'var(--ink)' }} />
+            <span className="technical-badge" style={{ borderColor: 'var(--accent-highlight)', color: 'var(--accent-highlight)' }}>
+              AST_EXTRACT
+            </span>
+            <span className="technical-meta" style={{ fontSize: '9px', marginTop: '6px' }}>
+              RECURSIVE SCAN
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="technical-meta">INDEX: 01_SOURCE</span>
+            <span className="technical-meta">LATENCY: &lt; 400MS</span>
           </div>
         </div>
 
-        {/* Panel 3 */}
-        <div className="horizontal-panel" style={{ width: '100vw', height: '100%', position: 'relative', padding: 'clamp(16px, 4vw, 24px)' }}>
-          <div className="outline-number" style={{ top: '5vh', left: '5vw', opacity: 0.05, color: 'transparent', WebkitTextStroke: '4px var(--ink)' }}>03</div>
-          <div style={{ position: 'absolute', top: '15vh', left: '10vw', maxWidth: '600px', zIndex: 10 }}>
-            <h2 className={styles.displayHeadline} style={{ fontSize: 'clamp(32px, 5vw, 64px)', marginBottom: '24px' }}>
-              Phase 3: Spatial Render
+        {/* Panel 2: Graph Mapping */}
+        <div
+          className="horizontal-panel"
+          style={{
+            width: '100vw',
+            height: '100%',
+            position: 'relative',
+            padding: 'clamp(24px, 5vw, 64px)',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            borderLeft: '1px solid var(--border-subtle)'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="technical-meta">[PIPELINE 02/03 // TOPOLOGY]</span>
+            <span className="technical-badge technical-badge-cyan">GRAPH: FORCE-DIRECTED</span>
+          </div>
+
+          <div style={{ maxWidth: '640px', zIndex: 10 }}>
+            <h2
+              style={{
+                fontFamily: 'Comvota, sans-serif',
+                fontSize: 'clamp(32px, 4.5vw, 72px)',
+                lineHeight: 0.95,
+                color: 'var(--ink)',
+                textTransform: 'uppercase',
+                margin: '0 0 20px 0'
+              }}
+            >
+              Phase 2: Force-Directed Topology
             </h2>
-            <p className={styles.bodyText}>
-              Finally, we orchestrate the multi-dimensional graph into a 3D physical space, letting you fly through your architecture like a city.
+            <p
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 'clamp(15px, 1.3vw, 19px)',
+                lineHeight: 1.6,
+                color: 'var(--text-secondary)',
+                margin: 0
+              }}
+            >
+              Files and modules are transformed into graph vertices with repulsive physics and weighted import edges. Architectural silos and cyclic dependencies become immediately visible.
             </p>
           </div>
+
           {/* Node Box */}
-          <div style={{
-            position: 'absolute',
-            top: '65%',
-            left: '50vw',
-            transform: 'translate(-50%, -50%)',
-            width: '180px',
-            height: '180px',
-            border: '2px solid var(--ink)',
-            backgroundColor: 'var(--surface)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1,
-            boxShadow: '12px 12px 0px var(--ink)'
-          }}>
-            <i className="fa-solid fa-cubes" style={{ fontSize: '3rem', marginBottom: '1rem', color: 'var(--ink)' }}></i>
-            <span className="tech-label" style={{ backgroundColor: 'var(--bg)' }}>3D_RENDER</span>
+          <div
+            className="tactile-panel"
+            style={{
+              position: 'absolute',
+              top: '64%',
+              left: '50vw',
+              transform: 'translate(-50%, -50%)',
+              width: '190px',
+              height: '190px',
+              backgroundColor: 'rgba(8, 10, 14, 0.95)',
+              border: '1px solid var(--accent-highlight)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2,
+              boxShadow: '0 0 32px rgba(0, 255, 204, 0.15)'
+            }}
+          >
+            <i className="fa-solid fa-diagram-project" style={{ fontSize: '2.5rem', marginBottom: '12px', color: 'var(--accent-highlight)' }} />
+            <span className="technical-badge" style={{ borderColor: 'var(--accent-highlight)', color: 'var(--accent-highlight)' }}>
+              GRAPH_BUILD
+            </span>
+            <span className="technical-meta" style={{ fontSize: '9px', marginTop: '6px' }}>
+              TOPOLOGY_SOLVER
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="technical-meta">INDEX: 02_TOPOLOGY</span>
+            <span className="technical-meta">NODES: 60,000+</span>
           </div>
         </div>
 
+        {/* Panel 3: Spatial Cartography */}
+        <div
+          className="horizontal-panel"
+          style={{
+            width: '100vw',
+            height: '100%',
+            position: 'relative',
+            padding: 'clamp(24px, 5vw, 64px)',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            borderLeft: '1px solid var(--border-subtle)'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="technical-meta">[PIPELINE 03/03 // ORCHESTRATION]</span>
+            <span className="technical-badge technical-badge-cyan">WEBGL: INSTANCED 120FPS</span>
+          </div>
+
+          <div style={{ maxWidth: '640px', zIndex: 10 }}>
+            <h2
+              style={{
+                fontFamily: 'Comvota, sans-serif',
+                fontSize: 'clamp(32px, 4.5vw, 72px)',
+                lineHeight: 0.95,
+                color: 'var(--ink)',
+                textTransform: 'uppercase',
+                margin: '0 0 20px 0'
+              }}
+            >
+              Phase 3: Spatial Cartography & Copilot
+            </h2>
+            <p
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: 'clamp(15px, 1.3vw, 19px)',
+                lineHeight: 1.6,
+                color: 'var(--text-secondary)',
+                margin: 0
+              }}
+            >
+              Fly through the codebase with damped camera flight controls. Pin any node into the grounded reasoning copilot, receiving citations that visually anchor back into physical 3D nodes.
+            </p>
+          </div>
+
+          {/* Node Box */}
+          <div
+            className="tactile-panel"
+            style={{
+              position: 'absolute',
+              top: '64%',
+              left: '50vw',
+              transform: 'translate(-50%, -50%)',
+              width: '190px',
+              height: '190px',
+              backgroundColor: 'rgba(8, 10, 14, 0.95)',
+              border: '1px solid var(--accent-highlight)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2,
+              boxShadow: '0 0 32px rgba(0, 255, 204, 0.15)'
+            }}
+          >
+            <i className="fa-solid fa-cube" style={{ fontSize: '2.5rem', marginBottom: '12px', color: 'var(--ink)' }} />
+            <span className="technical-badge" style={{ borderColor: 'var(--accent-highlight)', color: 'var(--accent-highlight)' }}>
+              SPATIAL_MATRIX
+            </span>
+            <span className="technical-meta" style={{ fontSize: '9px', marginTop: '6px' }}>
+              ORCHESTRATOR COPILOT
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="technical-meta">INDEX: 03_RENDER</span>
+            <span className="technical-meta">OUTPUT: 3D SPACE</span>
+          </div>
+        </div>
       </div>
     </section>
   );
