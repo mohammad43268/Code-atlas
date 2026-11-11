@@ -63,6 +63,7 @@ const SceneRouteLoader = () => (
 function App() {
   return (
     <Router>
+      <div className="film-grain" aria-hidden="true" />
       <Navbar />
       <Routes>
         <Route path="/" element={<LandingPage />} />
