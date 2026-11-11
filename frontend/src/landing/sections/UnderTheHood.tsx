@@ -109,7 +109,7 @@ export const UnderTheHood: React.FC = () => {
               {content.underTheHood.services.map((svc, i) => (
                 <g className="anim-svg-box" key={`box-${i}`}>
                   <rect x={60 + i * 120 - 50} y="120" width="100" height="40" rx="4" fill="var(--surface)" stroke="var(--ink)" />
-                  <text x={60 + i * 120} y="144" textAnchor="middle" fill="var(--ink)" stroke="none" fontSize="8" fontFamily="inherit" letterSpacing="0.1em" fontWeight="bold">{svc}</text>
+                  <text x={60 + i * 120} y="144" textAnchor="middle" fill="var(--ink)" stroke="none" fontSize="8" fontFamily="inherit" letterSpacing="0.1em" fontWeight="bold">{svc.name}</text>
                 </g>
               ))}
 
