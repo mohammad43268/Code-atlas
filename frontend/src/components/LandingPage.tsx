@@ -10,28 +10,25 @@ export const LandingPage: React.FC = () => {
   useEffect(() => {
     const fitText = () => {
       if (!containerRef.current || !wordmarkRef.current) return;
-      
+
       const container = containerRef.current;
       const wordmark = wordmarkRef.current;
-      
-      const pad = window.innerWidth >= 768 ? 48 : 32; 
+
+      const pad = window.innerWidth >= 768 ? 48 : 24;
       const targetWidth = container.clientWidth - pad;
-      
+
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Measure real glyph width (ignoring DOM element box extra spaces/bearings)
         const baseSize = 100;
         ctx.font = `${baseSize}px Comvota, sans-serif`;
         const metrics = ctx.measureText('CODEATLAS');
         const trueWidth = metrics.actualBoundingBoxRight + Math.abs(metrics.actualBoundingBoxLeft);
-        
+
         if (trueWidth > 0) {
           const scale = targetWidth / trueWidth;
           const newFontSize = baseSize * scale;
           wordmark.style.fontSize = `${Math.floor(newFontSize)}px`;
-          
-          // Export the optical width to align the top elements perfectly
           container.style.setProperty('--wordmark-width', `${targetWidth}px`);
         }
       }
@@ -56,136 +53,213 @@ export const LandingPage: React.FC = () => {
 
   return (
     <>
-      <div 
+      <div
         ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100svh',
-        backgroundColor: 'transparent',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        overflow: 'hidden'
-      }}
-    >
-      <WaterCanvas />
-
-      <div style={{
-        position: 'relative',
-        zIndex: 10,
-        padding: '0 16px', 
-        paddingBottom: '32px',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '3vh',
-        pointerEvents: 'none' // Ensure clicks fall through unless specified
-      }}>
-        
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
+        style={{
           width: '100%',
-          maxWidth: 'var(--wordmark-width, 100%)',
-          pointerEvents: 'auto' // Re-enable pointer events for the hero content
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <p style={{
-              fontSize: 'clamp(18px, 2vw, 24px)',
-              color: 'var(--ink)',
-              maxWidth: '30ch', 
-              margin: 0,
-              fontWeight: 400,
-              lineHeight: 1.3,
-              letterSpacing: '0.02em',
-              fontFamily: 'Comvota, sans-serif'
-            }}>
-              Explore any GitHub codebase as a 3D world.
-            </p>
-            
-            <Link 
-              to="/scene"
-              style={{
-                width: 'fit-content',
-                padding: '12px 24px',
-                backgroundColor: 'var(--ink)',
-                color: 'var(--bg)',
-                border: '1px solid var(--ink)',
-                fontFamily: 'Inter, sans-serif',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease',
-                boxShadow: '4px 4px 0px rgba(0,0,0,0.2)',
-                textDecoration: 'none'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--ink)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--ink)';
-                e.currentTarget.style.color = 'var(--bg)';
-                e.currentTarget.style.transform = 'translate(0px, 0px)';
-              }}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'translate(2px, 2px)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'translate(0px, 0px)'}
-            >
-              Enter 3D Space <i className="fa-solid fa-arrow-right"></i>
-            </Link>
-          </div>
-          
-          <span style={{
-            fontSize: 'clamp(14px, 1.5vw, 18px)',
-            color: 'var(--ink)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            fontWeight: 400,
-            fontFamily: 'Comvota, sans-serif',
-            paddingBottom: '0' 
-          }}>
-            Scroll ↓
-          </span>
-        </div>
-
-        <div style={{
-          width: '100%',
+          height: '100svh',
+          backgroundColor: 'transparent',
+          position: 'relative',
           display: 'flex',
-          justifyContent: 'center',
-          pointerEvents: 'none'
-        }}>
-          <h1 
-            ref={wordmarkRef}
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          overflow: 'hidden'
+        }}
+      >
+        <WaterCanvas />
+
+        {/* Hero Viewport Tactical Deck */}
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            padding: '0 20px',
+            paddingBottom: '28px',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '2.5vh',
+            pointerEvents: 'none'
+          }}
+        >
+          {/* Top Telemetry Strip */}
+          <div
             style={{
-              margin: 0,
-              padding: 0,
-              fontFamily: 'Comvota, sans-serif',
-              fontWeight: 300,
-              lineHeight: 0.8,
-              letterSpacing: '0',
-              color: 'var(--ink)',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-              display: 'inline-block', 
-              width: 'fit-content',
-              userSelect: 'none',
-              textAlign: 'center'
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              width: '100%',
+              maxWidth: 'var(--wordmark-width, 100%)',
+              pointerEvents: 'auto'
             }}
           >
-            CODEATLAS
-          </h1>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '580px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span className="technical-badge technical-badge-cyan">
+                  <span
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-highlight)',
+                      display: 'inline-block',
+                      animation: 'cyanPulse 2s infinite ease-in-out'
+                    }}
+                  />
+                  AST ENGINE ONLINE
+                </span>
+                <span className="technical-meta" style={{ color: 'var(--text-muted)' }}>
+                  COORD // [40.7128°N, 74.0060°W]
+                </span>
+              </div>
+
+              <h2
+                style={{
+                  fontSize: 'clamp(20px, 2.4vw, 32px)',
+                  color: 'var(--ink)',
+                  margin: 0,
+                  fontWeight: 300,
+                  lineHeight: 1.25,
+                  letterSpacing: '0.01em',
+                  fontFamily: 'Comvota, sans-serif'
+                }}
+              >
+                Transpiling abstract GitHub codebases into living 3D spatial topography.
+              </h2>
+
+              {/* Action Deck */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <Link
+                  to="/scene"
+                  style={{
+                    padding: '12px 28px',
+                    backgroundColor: 'var(--accent-highlight)',
+                    color: '#050608',
+                    border: '1px solid var(--accent-highlight)',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    textDecoration: 'none',
+                    boxShadow: '0 0 24px rgba(0, 255, 204, 0.25)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 0 32px rgba(0, 255, 204, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 0 24px rgba(0, 255, 204, 0.25)';
+                  }}
+                >
+                  <span>LAUNCH 3D ENGINE</span>
+                  <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.7rem' }} />
+                </Link>
+
+                <a
+                  href="#statement-heading"
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    color: 'var(--ink)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 500,
+                    fontSize: '0.78rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                  }}
+                >
+                  SYSTEM ARCHITECTURE
+                </a>
+              </div>
+            </div>
+
+            {/* Scroll Indicator */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: '8px'
+              }}
+            >
+              <span className="technical-meta">SCROLL TO MAP ↓</span>
+              <div
+                style={{
+                  width: '1px',
+                  height: '40px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    height: '16px',
+                    backgroundColor: 'var(--accent-highlight)',
+                    animation: 'subtleShimmer 1.8s infinite ease-in-out'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Monumental Responsive Display Wordmark */}
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              pointerEvents: 'none'
+            }}
+          >
+            <h1
+              ref={wordmarkRef}
+              style={{
+                margin: 0,
+                padding: 0,
+                fontFamily: 'Comvota, sans-serif',
+                fontWeight: 300,
+                lineHeight: 0.82,
+                letterSpacing: '-0.01em',
+                color: 'var(--ink)',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+                display: 'inline-block',
+                width: 'fit-content',
+                userSelect: 'none',
+                textAlign: 'center'
+              }}
+            >
+              CODEATLAS
+            </h1>
+          </div>
         </div>
       </div>
-    </div>
-    <LandingSections />
-  </>
+      <LandingSections />
+    </>
   );
 };
