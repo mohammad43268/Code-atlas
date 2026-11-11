@@ -1,43 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-const links = [
-  { name: 'Home', path: '/' },
-  { name: 'Documentation', path: '/docs' },
-  { name: 'Projects', path: '/projects' },
-  { name: 'About', path: '/about' }
+const navLinks = [
+  { name: 'Home', path: '/', index: '01' },
+  { name: 'Documentation', path: '/docs', index: '02' },
+  { name: 'Projects', path: '/projects', index: '03' },
+  { name: 'About', path: '/about', index: '04' }
 ];
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 720);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 860);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
-  const navRef = useRef<HTMLElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 720);
+    const handleResize = () => setIsMobile(window.innerWidth < 860);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    if (!isMobile && navRef.current) {
-      // Need a tiny timeout to ensure fonts and DOM are laid out
-      setTimeout(() => {
-        const activeLink = navRef.current?.querySelector('.nav-link.active') as HTMLElement;
-        if (activeLink) {
-          // Adjust underline to match text width, ignoring padding roughly, or just use offsetWidth
-          setIndicatorStyle({
-            left: activeLink.offsetLeft + 24, // 24 is side padding
-            width: activeLink.offsetWidth - 48,
-            opacity: 1
-          });
-        }
-      }, 50);
-    }
-  }, [location.pathname, isMobile]);
 
   useEffect(() => {
     if (menuOpen) {
@@ -46,42 +27,14 @@ export const Navbar: React.FC = () => {
         if (e.key === 'Escape') setMenuOpen(false);
       };
       document.addEventListener('keydown', handleEscape);
-      
-      // Trap focus
-      const focusableEls = overlayRef.current?.querySelectorAll('a, button');
-      if (focusableEls && focusableEls.length > 0) {
-        const first = focusableEls[0] as HTMLElement;
-        const last = focusableEls[focusableEls.length - 1] as HTMLElement;
-        
-        const handleTab = (e: KeyboardEvent) => {
-          if (e.key === 'Tab') {
-            if (e.shiftKey) {
-              if (document.activeElement === first) {
-                e.preventDefault();
-                last.focus();
-              }
-            } else {
-              if (document.activeElement === last) {
-                e.preventDefault();
-                first.focus();
-              }
-            }
-          }
-        };
-        document.addEventListener('keydown', handleTab);
-        first.focus();
-        
-        return () => {
-          document.removeEventListener('keydown', handleEscape);
-          document.removeEventListener('keydown', handleTab);
-        }
-      }
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleEscape);
+      };
     } else {
       document.body.style.overflow = '';
     }
   }, [menuOpen]);
-
-  const closeMenu = () => setMenuOpen(false);
 
   if (location.pathname === '/scene') {
     return null;
@@ -89,158 +42,256 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <div style={{
-        position: 'fixed',
-        top: '20px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 9999,
-        display: 'flex',
-        justifyContent: 'center',
-        width: '100%',
-        pointerEvents: 'none'
-      }}>
-        <nav 
-          ref={navRef}
+      <header
+        style={{
+          position: 'fixed',
+          top: '16px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          display: 'flex',
+          justifyContent: 'center',
+          width: 'calc(100% - 32px)',
+          maxWidth: '1280px',
+          pointerEvents: 'none'
+        }}
+      >
+        <nav
+          className="tactile-panel"
           style={{
             pointerEvents: 'auto',
-            background: 'transparent',
             display: 'flex',
-            position: 'relative',
-            gap: '24px',
-            padding: '12px 32px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            padding: '8px 16px',
+            backgroundColor: 'rgba(6, 8, 12, 0.88)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)'
           }}
         >
-          {isMobile ? (
-            <button
-              onClick={() => setMenuOpen(true)}
+          {/* Brand & Telemetry Badge */}
+          <Link
+            to="/"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              textDecoration: 'none',
+              color: 'var(--ink)'
+            }}
+          >
+            <div
               style={{
-                background: 'transparent',
-                border: 'none',
-                padding: '8px 24px',
-                color: 'var(--ink)',
-                fontSize: '16px',
-                fontWeight: 400,
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                cursor: 'pointer',
-                outline: 'none',
-                fontFamily: 'inherit'
+                width: '7px',
+                height: '7px',
+                backgroundColor: 'var(--accent-highlight)',
+                borderRadius: '0%',
+                animation: 'cyanPulse 2.4s infinite ease-in-out'
+              }}
+            />
+            <span
+              style={{
+                fontFamily: 'Comvota, sans-serif',
+                fontSize: '1.15rem',
+                letterSpacing: '0.06em',
+                lineHeight: 1
               }}
             >
-              Menu
-            </button>
-          ) : (
-            <>
-              <div 
-                style={{
-                  position: 'absolute',
-                  bottom: '10px',
-                  left: indicatorStyle.left,
-                  width: indicatorStyle.width,
-                  height: '2px',
-                  backgroundColor: 'var(--ink)',
-                  opacity: indicatorStyle.opacity,
-                  transition: 'all 300ms cubic-bezier(0.22, 1, 0.36, 1)',
-                  zIndex: 0
-                }}
-              />
-              {links.map((link) => {
+              CODEATLAS
+            </span>
+            <span
+              className="technical-badge technical-badge-cyan"
+              style={{ display: isMobile ? 'none' : 'inline-flex' }}
+            >
+              v1.0 // CARTOGRAPHY
+            </span>
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          {!isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {navLinks.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
                   <Link
                     key={link.path}
                     to={link.path}
-                    aria-current={isActive ? 'page' : undefined}
                     style={{
-                      position: 'relative',
-                      zIndex: 1,
-                      padding: '10px 24px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
                       textDecoration: 'none',
-                      color: 'var(--ink)',
-                      fontSize: '16px',
-                      fontWeight: 400,
-                      textTransform: 'uppercase',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '11px',
                       letterSpacing: '0.12em',
-                      transition: 'color 300ms cubic-bezier(0.22, 1, 0.36, 1)',
-                      outline: 'none',
+                      textTransform: 'uppercase',
+                      color: isActive ? 'var(--accent-highlight)' : 'var(--text-muted)',
+                      backgroundColor: isActive ? 'rgba(0, 255, 204, 0.08)' : 'transparent',
+                      border: isActive ? '1px solid rgba(0, 255, 204, 0.25)' : '1px solid transparent',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                     }}
-                    className={`nav-link ${isActive ? 'active' : ''}`}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = 'var(--ink)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = 'var(--text-muted)';
+                        e.currentTarget.style.borderColor = 'transparent';
+                      }
+                    }}
                   >
-                    {link.name}
+                    <span style={{ opacity: 0.5 }}>{link.index}</span>
+                    <span>{link.name}</span>
                   </Link>
                 );
               })}
-            </>
+            </div>
           )}
-        </nav>
-      </div>
 
-      {isMobile && menuOpen && (
-        <div 
+          {/* Right Action: Launch 3D Space */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link
+              to="/scene"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                backgroundColor: 'var(--accent-highlight)',
+                color: '#050608',
+                border: 'none',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 700,
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 0 16px rgba(0, 255, 204, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <span>ENTER 3D</span>
+              <i className="fa-solid fa-arrow-right" style={{ fontSize: '10px' }} />
+            </Link>
+
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open navigation menu"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-subtle)',
+                  padding: '6px 12px',
+                  color: 'var(--ink)',
+                  fontSize: '11px',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  cursor: 'pointer'
+                }}
+              >
+                MENU
+              </button>
+            )}
+          </div>
+        </nav>
+      </header>
+
+      {/* Mobile Drawer Overlay */}
+      {menuOpen && (
+        <div
           ref={overlayRef}
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'var(--bg)',
             zIndex: 10000,
+            backgroundColor: 'rgba(5, 6, 8, 0.96)',
+            backdropFilter: 'blur(24px)',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px'
+            padding: '24px',
+            animation: 'fadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-          <button 
-            onClick={closeMenu}
-            style={{
-              position: 'absolute',
-              top: '24px',
-              right: '24px',
-              background: 'transparent',
-              border: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              color: 'var(--ink)',
-              cursor: 'pointer',
-              padding: '8px'
-            }}
-          >
-            Close
-          </button>
-          
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '32px', textAlign: 'center' }}>
-            {links.map((link) => (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px' }}>
+            <span style={{ fontFamily: 'Comvota, sans-serif', fontSize: '1.4rem' }}>CODEATLAS</span>
+            <button
+              onClick={() => setMenuOpen(false)}
+              style={{
+                background: 'none',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--ink)',
+                padding: '6px 12px',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+            >
+              [ESC // CLOSE]
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '48px' }}>
+            {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                onClick={closeMenu}
-                aria-current={location.pathname === link.path ? 'page' : undefined}
+                onClick={() => setMenuOpen(false)}
                 style={{
-                  fontSize: '32px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  color: 'var(--ink)',
-                  textDecoration: 'none'
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '12px',
+                  textDecoration: 'none',
+                  color: location.pathname === link.path ? 'var(--accent-highlight)' : 'var(--ink)',
+                  fontFamily: 'Comvota, sans-serif',
+                  fontSize: '2rem',
+                  letterSpacing: '0.04em'
                 }}
               >
-                {link.name}
+                <span style={{ fontSize: '12px', fontFamily: "'JetBrains Mono', monospace", color: 'var(--muted)' }}>
+                  {link.index}
+                </span>
+                <span>{link.name}</span>
               </Link>
             ))}
-          </nav>
+          </div>
+
+          <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="technical-meta">STATUS // ACTIVE_NODE</span>
+            <Link
+              to="/scene"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: 'var(--accent-highlight)',
+                color: '#050608',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 700,
+                fontSize: '12px',
+                textDecoration: 'none'
+              }}
+            >
+              LAUNCH 3D ENGINE →
+            </Link>
+          </div>
         </div>
       )}
-      
-      <style>{`
-        .nav-link:focus-visible {
-          border-radius: 999px;
-          outline: 2px solid var(--ink);
-          outline-offset: -2px;
-        }
-      `}</style>
     </>
   );
 };
