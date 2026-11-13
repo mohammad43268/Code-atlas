@@ -50,37 +50,43 @@ export const Statement: React.FC = () => {
     return () => ctx.revert();
   }, []);
 
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  };
+
   return (
     <section
       ref={sectionRef}
       className={styles.section}
       aria-labelledby="statement-heading"
-      style={{ borderTop: '1px solid var(--border-subtle)', position: 'relative' }}
+      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.07)', position: 'relative' }}
     >
-      {/* Section Header Meta */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px' }}>
         <span className="technical-meta">{content.statement.label}</span>
-        <span className="technical-badge technical-badge-cyan">PARADIGM SHIFT // SPATIAL</span>
+        <span className="technical-badge technical-badge-ice" style={{ borderRadius: '9999px' }}>
+          PARADIGM SHIFT // SPATIAL
+        </span>
       </div>
 
       <div className={styles.grid} style={{ alignItems: 'flex-start' }}>
-        {/* Left Column: Massive Editorial Manifesto */}
         <div style={{ gridColumn: '1 / 8' }}>
           <h2
             id="statement-heading"
             style={{
-              fontFamily: 'Comvota, sans-serif',
-              fontSize: 'clamp(36px, 5.2vw, 84px)',
-              color: 'var(--ink)',
-              lineHeight: 0.95,
-              fontWeight: 300,
+              fontFamily: "'Inter Tight', sans-serif",
+              fontSize: 'clamp(36px, 5.2vw, 76px)',
+              color: '#F4F4F6',
+              lineHeight: 0.96,
+              fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '-0.02em',
-              margin: '0 0 32px 0'
+              letterSpacing: '-0.04em',
+              margin: '0 0 28px 0'
             }}
           >
             {words.map((word, i) => (
-              <span key={i} style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.24em' }}>
+              <span key={i} style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.22em' }}>
                 <span className="manifesto-word" style={{ display: 'inline-block', willChange: 'transform, opacity' }}>
                   {word}
                 </span>
@@ -91,9 +97,9 @@ export const Statement: React.FC = () => {
           <p
             style={{
               fontFamily: 'Inter, sans-serif',
-              fontSize: 'clamp(16px, 1.4vw, 20px)',
+              fontSize: 'clamp(15px, 1.35vw, 19px)',
               lineHeight: 1.6,
-              color: 'var(--text-secondary)',
+              color: '#9499A6',
               maxWidth: '620px',
               margin: '0 0 32px 0'
             }}
@@ -101,7 +107,6 @@ export const Statement: React.FC = () => {
             {content.statement.support}
           </p>
 
-          {/* Technical Parameter Chips */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <span className="technical-badge">[AST // TREE-SITTER]</span>
             <span className="technical-badge">[TOPOLOGY // FORCE-DIRECTED]</span>
@@ -109,21 +114,20 @@ export const Statement: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Tactile Telemetry Inspection Frame */}
         <div style={{ gridColumn: '8 / -1' }} className="manifesto-card">
           <div
-            className="tactile-panel"
+            className="spotlight-card"
+            onMouseMove={handleCardMouseMove}
             style={{
               padding: '16px',
-              backgroundColor: 'rgba(10, 12, 16, 0.9)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '10px',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="technical-meta" style={{ color: 'var(--accent-highlight)' }}>
+              <span className="technical-meta" style={{ color: '#38BDF8' }}>
                 TOPOLOGY_SPEC // STUDY_01
               </span>
               <span className="technical-meta">DEPTH: 8 LVLS</span>
@@ -134,6 +138,7 @@ export const Statement: React.FC = () => {
                 width: '100%',
                 aspectRatio: '16/10',
                 overflow: 'hidden',
+                borderRadius: '6px',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 position: 'relative'
               }}
@@ -145,16 +150,8 @@ export const Statement: React.FC = () => {
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
-                  filter: 'grayscale(100%) contrast(1.1)',
+                  filter: 'grayscale(100%) contrast(1.15)',
                   opacity: 0.85
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  border: '1px solid rgba(0, 255, 204, 0.15)',
-                  pointerEvents: 'none'
                 }}
               />
             </div>
@@ -164,21 +161,27 @@ export const Statement: React.FC = () => {
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '8px',
-                paddingTop: '6px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+                paddingTop: '8px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.07)'
               }}
             >
               <div>
                 <span className="technical-meta" style={{ fontSize: '9px', display: 'block' }}>SCALE</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ink)' }}>60K+ NODES</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#F4F4F6' }}>
+                  60K+ NODES
+                </span>
               </div>
               <div>
                 <span className="technical-meta" style={{ fontSize: '9px', display: 'block' }}>REFRESH</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--accent-highlight)' }}>120 FPS</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#38BDF8' }}>
+                  144 FPS
+                </span>
               </div>
               <div>
                 <span className="technical-meta" style={{ fontSize: '9px', display: 'block' }}>DRIFT</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ink)' }}>0.00%</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#F4F4F6' }}>
+                  0.00%
+                </span>
               </div>
             </div>
           </div>

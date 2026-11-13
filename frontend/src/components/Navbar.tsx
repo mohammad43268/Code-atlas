@@ -8,11 +8,44 @@ const navLinks = [
   { name: 'About', path: '/about', index: '04' }
 ];
 
+const MagneticItem: React.FC<{ children: React.ReactNode; strength?: number }> = ({
+  children,
+  strength = 0.25
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = (e.clientX - (rect.left + rect.width / 2)) * strength;
+    const y = (e.clientY - (rect.top + rect.height / 2)) * strength;
+    ref.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  };
+
+  const handleMouseLeave = () => {
+    if (!ref.current) return;
+    ref.current.style.transform = 'translate3d(0px, 0px, 0)';
+  };
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        display: 'inline-flex',
+        transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 860);
   const [menuOpen, setMenuOpen] = useState(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 860);
@@ -45,34 +78,36 @@ export const Navbar: React.FC = () => {
       <header
         style={{
           position: 'fixed',
-          top: '16px',
+          top: '18px',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 9999,
           display: 'flex',
           justifyContent: 'center',
           width: 'calc(100% - 32px)',
-          maxWidth: '1280px',
+          maxWidth: '1180px',
           pointerEvents: 'none'
         }}
       >
         <nav
-          className="tactile-panel"
+          aria-label="Primary Navigation"
           style={{
             pointerEvents: 'auto',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             width: '100%',
-            padding: '8px 16px',
-            backgroundColor: 'rgba(6, 8, 12, 0.88)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)'
+            height: '56px',
+            padding: '0 10px 0 22px',
+            borderRadius: '9999px',
+            background: 'rgba(10, 11, 14, 0.72)',
+            backdropFilter: 'blur(24px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.08)'
           }}
         >
-          {/* Brand & Telemetry Badge */}
+          {/* Brand & Crisp Emerald Online Pulse */}
           <Link
             to="/"
             style={{
@@ -80,114 +115,105 @@ export const Navbar: React.FC = () => {
               alignItems: 'center',
               gap: '10px',
               textDecoration: 'none',
-              color: 'var(--ink)'
+              color: '#F4F4F6'
             }}
           >
-            <div
-              style={{
-                width: '7px',
-                height: '7px',
-                backgroundColor: 'var(--accent-highlight)',
-                borderRadius: '0%',
-                animation: 'cyanPulse 2.4s infinite ease-in-out'
-              }}
-            />
+            <span className="emerald-dot" />
             <span
               style={{
-                fontFamily: 'Comvota, sans-serif',
-                fontSize: '1.15rem',
-                letterSpacing: '0.06em',
+                fontFamily: "'Inter Tight', sans-serif",
+                fontWeight: 800,
+                fontSize: '0.95rem',
+                letterSpacing: '-0.02em',
                 lineHeight: 1
               }}
             >
               CODEATLAS
             </span>
             <span
-              className="technical-badge technical-badge-cyan"
-              style={{ display: isMobile ? 'none' : 'inline-flex' }}
+              className="technical-badge"
+              style={{
+                display: isMobile ? 'none' : 'inline-flex',
+                borderRadius: '9999px',
+                fontSize: '10px',
+                color: '#9499A6',
+                borderColor: 'rgba(255, 255, 255, 0.08)'
+              }}
             >
-              v1.0 // CARTOGRAPHY
+              V1.0 // SPATIAL
             </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links with Magnetic Hover */}
           {!isMobile && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path;
                 return (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '6px 14px',
-                      textDecoration: 'none',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: '11px',
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
-                      color: isActive ? 'var(--accent-highlight)' : 'var(--text-muted)',
-                      backgroundColor: isActive ? 'rgba(0, 255, 204, 0.08)' : 'transparent',
-                      border: isActive ? '1px solid rgba(0, 255, 204, 0.25)' : '1px solid transparent',
-                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = 'var(--ink)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = 'var(--text-muted)';
-                        e.currentTarget.style.borderColor = 'transparent';
-                      }
-                    }}
-                  >
-                    <span style={{ opacity: 0.5 }}>{link.index}</span>
-                    <span>{link.name}</span>
-                  </Link>
+                  <MagneticItem key={link.path} strength={0.2}>
+                    <Link
+                      to={link.path}
+                      aria-current={isActive ? 'page' : undefined}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '7px 14px',
+                        borderRadius: '9999px',
+                        textDecoration: 'none',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '11px',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: isActive ? '#F4F4F6' : '#646A77',
+                        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.07)' : 'transparent',
+                        border: isActive
+                          ? '1px solid rgba(255, 255, 255, 0.16)'
+                          : '1px solid transparent',
+                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.color = '#F4F4F6';
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.color = '#646A77';
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
+                    >
+                      <span style={{ opacity: 0.55 }}>{link.index}</span>
+                      <span>{link.name}</span>
+                    </Link>
+                  </MagneticItem>
                 );
               })}
             </div>
           )}
 
-          {/* Right Action: Launch 3D Space */}
+          {/* Liquid Platinum Primary CTA */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Link
-              to="/scene"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 14px',
-                backgroundColor: 'var(--accent-highlight)',
-                color: '#050608',
-                border: 'none',
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 0 16px rgba(0, 255, 204, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <span>ENTER 3D</span>
-              <i className="fa-solid fa-arrow-right" style={{ fontSize: '10px' }} />
-            </Link>
+            <MagneticItem strength={0.22}>
+              <Link
+                to="/scene"
+                className="platinum-cta"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  height: '38px',
+                  padding: '0 18px',
+                  borderRadius: '9999px'
+                }}
+              >
+                <span>ENTER 3D</span>
+                <i className="fa-solid fa-arrow-right" style={{ fontSize: '10px' }} />
+              </Link>
+            </MagneticItem>
 
             {isMobile && (
               <button
@@ -195,10 +221,12 @@ export const Navbar: React.FC = () => {
                 onClick={() => setMenuOpen(true)}
                 aria-label="Open navigation menu"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid var(--border-subtle)',
-                  padding: '6px 12px',
-                  color: 'var(--ink)',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '9999px',
+                  height: '38px',
+                  padding: '0 14px',
+                  color: '#F4F4F6',
                   fontSize: '11px',
                   fontFamily: "'JetBrains Mono', monospace",
                   textTransform: 'uppercase',
@@ -216,12 +244,11 @@ export const Navbar: React.FC = () => {
       {/* Mobile Drawer Overlay */}
       {menuOpen && (
         <div
-          ref={overlayRef}
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 10000,
-            backgroundColor: 'rgba(5, 6, 8, 0.96)',
+            backgroundColor: 'rgba(5, 5, 6, 0.96)',
             backdropFilter: 'blur(24px)',
             display: 'flex',
             flexDirection: 'column',
@@ -229,15 +256,26 @@ export const Navbar: React.FC = () => {
             animation: 'fadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px' }}>
-            <span style={{ fontFamily: 'Comvota, sans-serif', fontSize: '1.4rem' }}>CODEATLAS</span>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+              paddingBottom: '16px'
+            }}
+          >
+            <span style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 800, fontSize: '1.25rem', color: '#F4F4F6' }}>
+              CODEATLAS
+            </span>
             <button
               onClick={() => setMenuOpen(false)}
               style={{
                 background: 'none',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--ink)',
-                padding: '6px 12px',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '9999px',
+                color: '#F4F4F6',
+                padding: '6px 14px',
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: '11px',
                 cursor: 'pointer'
@@ -258,13 +296,14 @@ export const Navbar: React.FC = () => {
                   alignItems: 'baseline',
                   gap: '12px',
                   textDecoration: 'none',
-                  color: location.pathname === link.path ? 'var(--accent-highlight)' : 'var(--ink)',
-                  fontFamily: 'Comvota, sans-serif',
+                  color: location.pathname === link.path ? '#38BDF8' : '#F4F4F6',
+                  fontFamily: "'Inter Tight', sans-serif",
+                  fontWeight: 700,
                   fontSize: '2rem',
-                  letterSpacing: '0.04em'
+                  letterSpacing: '-0.03em'
                 }}
               >
-                <span style={{ fontSize: '12px', fontFamily: "'JetBrains Mono', monospace", color: 'var(--muted)' }}>
+                <span style={{ fontSize: '12px', fontFamily: "'JetBrains Mono', monospace", color: '#646A77' }}>
                   {link.index}
                 </span>
                 <span>{link.name}</span>
@@ -272,22 +311,24 @@ export const Navbar: React.FC = () => {
             ))}
           </div>
 
-          <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="technical-meta">STATUS // ACTIVE_NODE</span>
+          <div
+            style={{
+              marginTop: 'auto',
+              borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+              paddingTop: '16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span className="technical-meta">STATUS // OPERATIONAL</span>
             <Link
               to="/scene"
               onClick={() => setMenuOpen(false)}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: 'var(--accent-highlight)',
-                color: '#050608',
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-                fontSize: '12px',
-                textDecoration: 'none'
-              }}
+              className="platinum-cta"
+              style={{ padding: '10px 20px', borderRadius: '9999px' }}
             >
-              LAUNCH 3D ENGINE →
+              ENTER 3D →
             </Link>
           </div>
         </div>

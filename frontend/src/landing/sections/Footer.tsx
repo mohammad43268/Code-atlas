@@ -12,27 +12,19 @@ export const Footer: React.FC = () => {
       id="footer"
       className={styles.section}
       style={{
-        borderTop: '1px solid var(--border-subtle)',
-        paddingTop: '64px',
-        paddingBottom: '32px',
-        backgroundColor: '#040507',
+        borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+        paddingTop: '72px',
+        paddingBottom: '36px',
+        backgroundColor: '#050506',
         position: 'relative'
       }}
     >
-      <div className={styles.grid} style={{ marginBottom: '64px' }}>
+      <div className={styles.grid} style={{ marginBottom: '64px', gap: '24px' }}>
         {/* Left Column: Coordinates & Status */}
-        <div style={{ gridColumn: '1 / 6', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span
-              style={{
-                width: '6px',
-                height: '6px',
-                backgroundColor: 'var(--accent-highlight)',
-                borderRadius: '0%',
-                display: 'inline-block'
-              }}
-            />
-            <span className="technical-meta" style={{ color: 'var(--accent-highlight)' }}>
+        <div style={{ gridColumn: '1 / 6', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className="emerald-dot" />
+            <span className="technical-meta" style={{ color: '#10B981' }}>
               {content.footer.status}
             </span>
           </div>
@@ -56,16 +48,17 @@ export const Footer: React.FC = () => {
               key={link.path}
               to={link.path}
               style={{
-                color: 'var(--text-secondary)',
+                color: '#9499A6',
                 textDecoration: 'none',
                 fontSize: '11px',
                 fontFamily: "'JetBrains Mono', monospace",
                 textTransform: 'uppercase',
                 letterSpacing: '0.12em',
+                whiteSpace: 'nowrap',
                 transition: 'color 0.2s ease'
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-highlight)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#F4F4F6')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#9499A6')}
             >
               {link.name}
             </Link>
@@ -75,7 +68,7 @@ export const Footer: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              color: 'var(--accent-highlight)',
+              color: '#F8FAFC',
               textDecoration: 'none',
               fontSize: '11px',
               fontFamily: "'JetBrains Mono', monospace",
@@ -83,8 +76,12 @@ export const Footer: React.FC = () => {
               letterSpacing: '0.12em',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '6px',
+              whiteSpace: 'nowrap',
+              transition: 'color 0.2s ease'
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#38BDF8')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#F8FAFC')}
           >
             <span>GITHUB</span>
             <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: '9px' }} />
@@ -99,8 +96,8 @@ export const Footer: React.FC = () => {
           width: '100%',
           display: 'flex',
           justifyContent: 'center',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          paddingTop: '32px'
+          borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+          paddingTop: '36px'
         }}
       >
         <h2
@@ -108,13 +105,15 @@ export const Footer: React.FC = () => {
           style={{
             margin: 0,
             padding: 0,
-            fontFamily: 'Comvota, sans-serif',
-            fontWeight: 300,
-            lineHeight: 0.8,
-            color: 'var(--ink)',
+            fontFamily: "'Inter Tight', sans-serif",
+            fontWeight: 800,
+            lineHeight: 0.82,
+            background: 'linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 65%, rgba(255, 255, 255, 0.14) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
-            letterSpacing: '-0.01em',
+            letterSpacing: '-0.05em',
             userSelect: 'none'
           }}
         >
@@ -128,9 +127,9 @@ export const Footer: React.FC = () => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginTop: '24px',
+          marginTop: '28px',
           paddingTop: '16px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
           flexWrap: 'wrap',
           gap: '8px'
         }}

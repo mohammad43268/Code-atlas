@@ -20,14 +20,17 @@ export const LandingSections: React.FC = () => {
     if (prefersReducedMotion) return;
 
     const lenis = new Lenis({
-      lerp: 0.1,
-      smoothWheel: true,
+      lerp: 0.08,
+      smoothWheel: true
     });
-    
+
     lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((time) => {
+
+    const updateLenis = (time: number) => {
       lenis.raf(time * 1000);
-    });
+    };
+
+    gsap.ticker.add(updateLenis);
     gsap.ticker.lagSmoothing(0);
 
     if ('fonts' in document) {
@@ -38,7 +41,7 @@ export const LandingSections: React.FC = () => {
 
     return () => {
       lenis.destroy();
-      gsap.ticker.remove(lenis.raf);
+      gsap.ticker.remove(updateLenis);
     };
   }, []);
 

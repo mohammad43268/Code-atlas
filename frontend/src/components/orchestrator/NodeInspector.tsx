@@ -9,7 +9,8 @@ export const NodeInspector: React.FC = () => {
 
   const isPinned = pinnedContextNode?.id === selectedNode.id;
 
-  const handleCopyPath = async () => {
+  const handleCopyPath = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(selectedNode.path);
       setCopied(true);
@@ -19,198 +20,155 @@ export const NodeInspector: React.FC = () => {
     }
   };
 
+  const isFolder = selectedNode.type === 'folder';
+  const cleanPath = isFolder ? `${selectedNode.path.replace(/\/+$/, '')}/` : selectedNode.path;
+
   return (
     <div
-      className="glass-hud"
       style={{
         position: 'absolute',
-        top: '76px',
-        right: '16px',
+        top: '12px',
+        left: '12px',
         zIndex: 45,
-        width: '280px',
-        borderLeft: `3px solid ${selectedNode.color}`,
-        borderRadius: '12px',
-        padding: '14px',
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
         gap: '10px',
-        animation: 'fadeInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-        fontFamily: 'Inter, sans-serif'
+        background: '#161922',
+        border: '1px solid #282E3D',
+        borderRadius: '8px',
+        padding: '6px 12px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: '11px',
+        color: '#E2E8F0',
+        animation: 'fadeIn 0.18s ease-out'
       }}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-          <div
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              background: `${selectedNode.color}22`,
-              color: selectedNode.color,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.82rem',
-              flexShrink: 0
-            }}
-          >
-            <i className={`fa-solid ${selectedNode.type === 'folder' ? 'fa-folder' : 'fa-file-code'}`} />
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <h4
-              style={{
-                fontSize: '0.86rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}
-              title={selectedNode.name}
-            >
-              {selectedNode.name}
-            </h4>
-            <span
-              style={{
-                fontSize: '0.66rem',
-                fontFamily: "'JetBrains Mono', monospace",
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em'
-              }}
-            >
-              {selectedNode.type} {selectedNode.extension ? `• .${selectedNode.extension}` : ''}
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setSelectedNode(null)}
-          title="Close Inspector"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            padding: '2px',
-            fontSize: '0.85rem'
-          }}
-        >
-          <i className="fa-solid fa-xmark" />
-        </button>
-      </div>
-
-      {/* Path bar with copy button */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'rgba(255, 255, 255, 0.04)',
-          borderRadius: '6px',
-          padding: '6px 8px',
-          fontSize: '0.72rem',
-          fontFamily: "'JetBrains Mono', monospace",
-          color: 'var(--text-secondary)',
-          border: '1px solid rgba(255, 255, 255, 0.06)'
-        }}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+        <i
+          className={`fa-solid ${isFolder ? 'fa-folder' : 'fa-file-code'}`}
+          style={{ color: '#38BDF8', fontSize: '12px' }}
+        />
         <span
           style={{
+            fontWeight: 600,
+            color: '#F8FAFC',
+            maxWidth: '180px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            paddingRight: '6px'
+            whiteSpace: 'nowrap'
           }}
-          title={selectedNode.path}
+          title={cleanPath}
         >
-          {selectedNode.path}
+          {cleanPath}
         </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748B', fontSize: '10px' }}>
+        <span>d:{selectedNode.depth}</span>
+        {selectedNode.lineCount && <span>· ~{selectedNode.lineCount}L</span>}
+      </div>
+
+      <div style={{ width: '1px', height: '14px', backgroundColor: '#262A36' }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <button
+          type="button"
+          onClick={() => focusNode(selectedNode.id)}
+          title="Fly to node in 3D"
+          style={{
+            background: '#1F2430',
+            border: '1px solid #2D3444',
+            color: '#94A3B8',
+            borderRadius: '5px',
+            padding: '3px 7px',
+            fontSize: '10px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#F8FAFC';
+            e.currentTarget.style.borderColor = '#6366F1';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#94A3B8';
+            e.currentTarget.style.borderColor = '#2D3444';
+          }}
+        >
+          <i className="fa-solid fa-crosshairs" style={{ fontSize: '9px' }} />
+          <span>Fly</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPinnedContextNode(isPinned ? null : selectedNode)}
+          title={isPinned ? 'Unpin context' : 'Pin to AI prompt context'}
+          style={{
+            background: isPinned ? 'rgba(16, 185, 129, 0.15)' : '#1F2430',
+            border: isPinned ? '1px solid #10B981' : '1px solid #2D3444',
+            color: isPinned ? '#34D399' : '#94A3B8',
+            borderRadius: '5px',
+            padding: '3px 7px',
+            fontSize: '10px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (!isPinned) {
+              e.currentTarget.style.color = '#F8FAFC';
+              e.currentTarget.style.borderColor = '#6366F1';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isPinned) {
+              e.currentTarget.style.color = '#94A3B8';
+              e.currentTarget.style.borderColor = '#2D3444';
+            }
+          }}
+        >
+          <i className={`fa-solid ${isPinned ? 'fa-check' : 'fa-thumbtack'}`} style={{ fontSize: '9px' }} />
+          <span>{isPinned ? 'Pinned' : 'Pin'}</span>
+        </button>
+
         <button
           type="button"
           onClick={handleCopyPath}
-          title="Copy file path"
+          title="Copy path"
           style={{
-            background: 'none',
+            background: 'transparent',
             border: 'none',
-            color: copied ? 'var(--accent-highlight)' : 'var(--text-muted)',
+            color: copied ? '#34D399' : '#64748B',
             cursor: 'pointer',
-            fontSize: '0.72rem',
-            padding: '2px 4px',
-            flexShrink: 0
+            padding: '3px 5px',
+            fontSize: '11px'
           }}
         >
           <i className={`fa-solid ${copied ? 'fa-check' : 'fa-copy'}`} />
         </button>
-      </div>
-
-      {/* Stats row */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: '0.72rem',
-          fontFamily: "'JetBrains Mono', monospace",
-          color: 'var(--text-muted)',
-          padding: '0 2px'
-        }}
-      >
-        <span>TREE DEPTH: <strong style={{ color: 'var(--text-primary)' }}>{selectedNode.depth}</strong></span>
-        {selectedNode.lineCount && (
-          <span>SIZE: <strong style={{ color: 'var(--text-primary)' }}>~{selectedNode.lineCount}L</strong></span>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
-        <button
-          onClick={() => focusNode(selectedNode.id)}
-          style={{
-            flex: 1,
-            background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'var(--text-primary)',
-            borderRadius: '8px',
-            padding: '7px 10px',
-            fontSize: '0.72rem',
-            fontWeight: 500,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '5px',
-            transition: 'all 0.15s ease'
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)')}
-        >
-          <i className="fa-solid fa-crosshairs" />
-          <span>Fly To</span>
-        </button>
 
         <button
-          onClick={() => setPinnedContextNode(isPinned ? null : selectedNode)}
+          type="button"
+          onClick={() => setSelectedNode(null)}
+          title="Deselect"
           style={{
-            flex: 1.2,
-            background: isPinned ? 'var(--accent-highlight)' : 'rgba(255, 255, 255, 0.9)',
-            color: '#080808',
+            background: 'transparent',
             border: 'none',
-            borderRadius: '8px',
-            padding: '7px 10px',
-            fontSize: '0.72rem',
-            fontWeight: 700,
+            color: '#64748B',
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '5px',
-            transition: 'all 0.15s ease'
+            padding: '3px 5px',
+            fontSize: '11px',
+            marginLeft: '2px'
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#F87171')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#64748B')}
         >
-          <i className={`fa-solid ${isPinned ? 'fa-check' : 'fa-thumbtack'}`} />
-          <span>{isPinned ? 'Pinned' : 'Pin to AI'}</span>
+          <i className="fa-solid fa-xmark" />
         </button>
       </div>
     </div>

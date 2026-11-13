@@ -1,63 +1,85 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import gsap from 'gsap';
+import ScrollTrigger from 'gsap/ScrollTrigger';
 import { WaterCanvas } from './WaterCanvas';
 import { LandingSections } from '../landing/LandingSections';
 
+gsap.registerPlugin(ScrollTrigger);
+
+const HERO_CHARS = 'CODEATLAS'.split('');
+
 export const LandingPage: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const wordmarkRef = useRef<HTMLHeadingElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const subheadLayerRef = useRef<HTMLDivElement>(null);
+  const ctaLayerRef = useRef<HTMLDivElement>(null);
+  const wordmarkLayerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fitText = () => {
-      if (!containerRef.current || !wordmarkRef.current) return;
+    if (!heroRef.current) return;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
 
-      const container = containerRef.current;
-      const wordmark = wordmarkRef.current;
-
-      const pad = window.innerWidth >= 768 ? 48 : 24;
-      const targetWidth = container.clientWidth - pad;
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        const baseSize = 100;
-        ctx.font = `${baseSize}px Comvota, sans-serif`;
-        const metrics = ctx.measureText('CODEATLAS');
-        const trueWidth = metrics.actualBoundingBoxRight + Math.abs(metrics.actualBoundingBoxLeft);
-
-        if (trueWidth > 0) {
-          const scale = targetWidth / trueWidth;
-          const newFontSize = baseSize * scale;
-          wordmark.style.fontSize = `${Math.floor(newFontSize)}px`;
-          container.style.setProperty('--wordmark-width', `${targetWidth}px`);
+    const ctx = gsap.context(() => {
+      // Character reveal from overflow-hidden mask
+      gsap.fromTo(
+        '.hero-char',
+        { yPercent: 110 },
+        {
+          yPercent: 0,
+          duration: 1.05,
+          ease: 'power4.out',
+          stagger: 0.03,
+          delay: 0.1
         }
+      );
+
+      // Subtle intro reveal for metadata, headline & CTAs
+      gsap.fromTo(
+        '.hero-meta-reveal',
+        { y: 20, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.9,
+          stagger: 0.08,
+          ease: 'power3.out',
+          delay: 0.25
+        }
+      );
+
+      // Multi-layer ScrollTrigger scrub parallax differential
+      const scrollTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1.2
+        }
+      });
+
+      if (subheadLayerRef.current) {
+        scrollTl.to(subheadLayerRef.current, { yPercent: -35, opacity: 0.3, ease: 'none' }, 0);
       }
-    };
+      if (ctaLayerRef.current) {
+        scrollTl.to(ctaLayerRef.current, { yPercent: -20, opacity: 0.4, ease: 'none' }, 0);
+      }
+      if (wordmarkLayerRef.current) {
+        scrollTl.to(wordmarkLayerRef.current, { yPercent: 18, scale: 0.98, ease: 'none' }, 0);
+      }
+    }, heroRef);
 
-    if ('fonts' in document) {
-      document.fonts.ready.then(fitText);
-    } else {
-      setTimeout(fitText, 100);
-    }
-
-    const observer = new ResizeObserver(() => {
-      window.requestAnimationFrame(fitText);
-    });
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => observer.disconnect();
+    return () => ctx.revert();
   }, []);
 
   return (
     <>
       <div
-        ref={containerRef}
+        ref={heroRef}
         style={{
           width: '100%',
-          height: '100svh',
+          minHeight: '100svh',
+          paddingTop: '112px',
           backgroundColor: 'transparent',
           position: 'relative',
           display: 'flex',
@@ -68,127 +90,112 @@ export const LandingPage: React.FC = () => {
       >
         <WaterCanvas />
 
-        {/* Hero Viewport Tactical Deck */}
+        {/* Hero Content Stack */}
         <div
           style={{
             position: 'relative',
             zIndex: 10,
-            padding: '0 20px',
-            paddingBottom: '28px',
+            padding: '0 clamp(16px, 4vw, 40px) 24px clamp(16px, 4vw, 40px)',
             width: '100%',
+            maxWidth: '1440px',
+            margin: '0 auto',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2.5vh',
+            gap: 'clamp(24px, 4vh, 48px)',
             pointerEvents: 'none'
           }}
         >
-          {/* Top Telemetry Strip */}
+          {/* Editorial Lead & Action Deck */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-end',
+              flexWrap: 'wrap',
+              gap: '24px',
               width: '100%',
-              maxWidth: 'var(--wordmark-width, 100%)',
               pointerEvents: 'auto'
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '580px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span className="technical-badge technical-badge-cyan">
-                  <span
-                    style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      backgroundColor: 'var(--accent-highlight)',
-                      display: 'inline-block',
-                      animation: 'cyanPulse 2s infinite ease-in-out'
-                    }}
-                  />
-                  AST ENGINE ONLINE
-                </span>
-                <span className="technical-meta" style={{ color: 'var(--text-muted)' }}>
-                  COORD // [40.7128°N, 74.0060°W]
-                </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '640px' }}>
+              <div
+                ref={subheadLayerRef}
+                className="hero-meta-reveal"
+                style={{ display: 'flex', flexDirection: 'column', gap: '16px', willChange: 'transform, opacity' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span className="technical-badge technical-badge-emerald" style={{ borderRadius: '9999px' }}>
+                    <span className="emerald-dot" />
+                    AST ENGINE ONLINE
+                  </span>
+                  <span className="technical-meta">COORD // [40.7128°N, 74.0060°W]</span>
+                </div>
+
+                <h2
+                  style={{
+                    fontFamily: "'Inter Tight', sans-serif",
+                    fontSize: 'clamp(22px, 2.8vw, 38px)',
+                    color: '#F4F4F6',
+                    margin: 0,
+                    fontWeight: 600,
+                    lineHeight: 1.15,
+                    letterSpacing: '-0.03em'
+                  }}
+                >
+                  Transpiling abstract GitHub codebases into living 3D spatial topography.
+                </h2>
               </div>
 
-              <h2
-                style={{
-                  fontSize: 'clamp(20px, 2.4vw, 32px)',
-                  color: 'var(--ink)',
-                  margin: 0,
-                  fontWeight: 300,
-                  lineHeight: 1.25,
-                  letterSpacing: '0.01em',
-                  fontFamily: 'Comvota, sans-serif'
-                }}
+              {/* Liquid Platinum CTA Bar */}
+              <div
+                ref={ctaLayerRef}
+                className="hero-meta-reveal"
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', willChange: 'transform, opacity' }}
               >
-                Transpiling abstract GitHub codebases into living 3D spatial topography.
-              </h2>
-
-              {/* Action Deck */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <Link
                   to="/scene"
+                  className="platinum-cta"
                   style={{
-                    padding: '12px 28px',
-                    backgroundColor: 'var(--accent-highlight)',
-                    color: '#050608',
-                    border: '1px solid var(--accent-highlight)',
+                    padding: '13px 28px',
+                    borderRadius: '9999px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}
+                >
+                  <span>LAUNCH 3D ENGINE</span>
+                  <i className="fa-solid fa-arrow-right" style={{ fontSize: '10px' }} />
+                </Link>
+
+                <a
+                  href="#data-flow-heading"
+                  style={{
+                    padding: '13px 22px',
+                    borderRadius: '9999px',
+                    backgroundColor: 'rgba(14, 15, 18, 0.65)',
+                    backdropFilter: 'blur(20px)',
+                    color: '#F4F4F6',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                     fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 700,
-                    fontSize: '0.78rem',
+                    fontWeight: 500,
+                    fontSize: '11px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.12em',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    textDecoration: 'none',
-                    boxShadow: '0 0 24px rgba(0, 255, 204, 0.25)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 0 32px rgba(0, 255, 204, 0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 0 24px rgba(0, 255, 204, 0.25)';
-                  }}
-                >
-                  <span>LAUNCH 3D ENGINE</span>
-                  <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.7rem' }} />
-                </Link>
-
-                <a
-                  href="#statement-heading"
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                    color: 'var(--ink)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 500,
-                    fontSize: '0.78rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
                     gap: '8px',
                     textDecoration: 'none',
-                    transition: 'all 0.2s ease'
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.24)';
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.backgroundColor = 'rgba(14, 15, 18, 0.65)';
                   }}
                 >
                   SYSTEM ARCHITECTURE
@@ -196,8 +203,9 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Scroll Indicator */}
+            {/* Scroll Anchor */}
             <div
+              className="hero-meta-reveal"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -209,8 +217,8 @@ export const LandingPage: React.FC = () => {
               <div
                 style={{
                   width: '1px',
-                  height: '40px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  height: '44px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.14)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}
@@ -218,47 +226,74 @@ export const LandingPage: React.FC = () => {
                 <div
                   style={{
                     width: '100%',
-                    height: '16px',
-                    backgroundColor: 'var(--accent-highlight)',
-                    animation: 'subtleShimmer 1.8s infinite ease-in-out'
+                    height: '18px',
+                    backgroundColor: '#F8FAFC',
+                    animation: 'subtleShimmer 2.2s infinite cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Monumental Responsive Display Wordmark */}
+          {/* Giant Monumental Bottom-Anchored Display Wordmark */}
           <div
+            ref={wordmarkLayerRef}
             style={{
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              willChange: 'transform',
+              overflow: 'hidden'
             }}
           >
             <h1
-              ref={wordmarkRef}
+              aria-label="CODEATLAS"
               style={{
                 margin: 0,
                 padding: 0,
-                fontFamily: 'Comvota, sans-serif',
-                fontWeight: 300,
-                lineHeight: 0.82,
-                letterSpacing: '-0.01em',
-                color: 'var(--ink)',
+                fontFamily: "'Inter Tight', sans-serif",
+                fontSize: 'clamp(4.2rem, 15.2vw, 18rem)',
+                fontWeight: 800,
+                lineHeight: 0.84,
+                letterSpacing: '-0.05em',
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
-                display: 'inline-block',
-                width: 'fit-content',
                 userSelect: 'none',
-                textAlign: 'center'
+                textAlign: 'center',
+                display: 'flex'
               }}
             >
-              CODEATLAS
+              {HERO_CHARS.map((char, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    display: 'inline-block',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <span
+                    className="hero-char"
+                    style={{
+                      display: 'inline-block',
+                      backgroundImage:
+                        'linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 65%, rgba(255,255,255,0.12) 100%)',
+                      WebkitBackgroundClip: 'text',
+                      backgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      color: 'transparent',
+                      willChange: 'transform'
+                    }}
+                  >
+                    {char}
+                  </span>
+                </span>
+              ))}
             </h1>
           </div>
         </div>
       </div>
+
       <LandingSections />
     </>
   );

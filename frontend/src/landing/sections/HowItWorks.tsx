@@ -15,7 +15,7 @@ export const HowItWorks: React.FC = () => {
       gsap.utils.toArray('.anim-step-row').forEach((row: any) => {
         gsap.fromTo(
           row,
-          { opacity: 0, y: 30 },
+          { opacity: 0, y: 28 },
           {
             opacity: 1,
             y: 0,
@@ -34,40 +34,48 @@ export const HowItWorks: React.FC = () => {
     return () => ctx.revert();
   }, []);
 
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  };
+
   return (
     <section
       ref={sectionRef}
       className={styles.section}
       aria-labelledby="how-it-works-heading"
-      style={{ borderTop: '1px solid var(--border-subtle)', position: 'relative' }}
+      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.07)', position: 'relative' }}
     >
-      {/* Section Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '64px' }}>
-        <span className="technical-meta">[02 // EXECUTION PROTOCOL]</span>
-        <span className="technical-badge technical-badge-cyan">3-STAGE PIPELINE</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '56px' }}>
+        <span id="how-it-works-heading" className="technical-meta">[02 // EXECUTION PROTOCOL]</span>
+        <span className="technical-badge technical-badge-ice" style={{ borderRadius: '9999px' }}>
+          3-STAGE PIPELINE
+        </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '56px' }}>
         {content.howItWorks.map((item, i) => (
           <div
             key={item.step}
             className="anim-step-row"
             style={{
               paddingBottom: '48px',
-              borderBottom: i < content.howItWorks.length - 1 ? '1px solid var(--border-subtle)' : 'none'
+              borderBottom: i < content.howItWorks.length - 1 ? '1px solid rgba(255, 255, 255, 0.07)' : 'none'
             }}
           >
             <div className={styles.grid} style={{ alignItems: 'center' }}>
-              {/* Step Index & Tag */}
               <div style={{ gridColumn: '1 / 3' }}>
                 <span
                   style={{
-                    fontFamily: 'Comvota, sans-serif',
-                    fontSize: 'clamp(36px, 4vw, 56px)',
-                    color: 'var(--accent-highlight)',
+                    fontFamily: "'Inter Tight', sans-serif",
+                    fontSize: 'clamp(36px, 4vw, 52px)',
+                    fontWeight: 800,
+                    letterSpacing: '-0.04em',
+                    color: '#F4F4F6',
                     lineHeight: 1,
                     display: 'block',
-                    marginBottom: '8px'
+                    marginBottom: '10px'
                   }}
                 >
                   {item.step}
@@ -75,17 +83,17 @@ export const HowItWorks: React.FC = () => {
                 <span className="technical-badge">{item.tag}</span>
               </div>
 
-              {/* Step Title & Technical Copy */}
               <div style={{ gridColumn: '3 / 8' }}>
                 <h3
                   style={{
-                    fontFamily: 'Comvota, sans-serif',
-                    fontSize: 'clamp(24px, 2.6vw, 42px)',
-                    lineHeight: 1.05,
-                    color: 'var(--ink)',
+                    fontFamily: "'Inter Tight', sans-serif",
+                    fontSize: 'clamp(22px, 2.4vw, 36px)',
+                    lineHeight: 1.08,
+                    color: '#F4F4F6',
                     textTransform: 'uppercase',
-                    margin: '0 0 16px 0',
-                    fontWeight: 300
+                    letterSpacing: '-0.03em',
+                    margin: '0 0 14px 0',
+                    fontWeight: 700
                   }}
                 >
                   {item.title}
@@ -93,9 +101,9 @@ export const HowItWorks: React.FC = () => {
                 <p
                   style={{
                     fontFamily: 'Inter, sans-serif',
-                    fontSize: 'clamp(14px, 1.2vw, 17px)',
+                    fontSize: 'clamp(14px, 1.15vw, 16px)',
                     lineHeight: 1.6,
-                    color: 'var(--text-secondary)',
+                    color: '#9499A6',
                     maxWidth: '520px',
                     margin: 0
                   }}
@@ -104,26 +112,27 @@ export const HowItWorks: React.FC = () => {
                 </p>
               </div>
 
-              {/* Step Visual Blueprint Card */}
               <div style={{ gridColumn: '8 / -1', display: 'flex', justifyContent: 'flex-end' }}>
                 <div
-                  className="tactile-panel"
+                  className="spotlight-card"
+                  onMouseMove={handleCardMouseMove}
                   style={{
                     width: '100%',
                     maxWidth: '440px',
                     padding: '12px',
-                    backgroundColor: 'rgba(8, 10, 14, 0.9)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '10px'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="technical-meta" style={{ color: 'var(--accent-highlight)' }}>
+                    <span className="technical-meta" style={{ color: '#38BDF8' }}>
                       STEP_{item.step} // BLUEPRINT
                     </span>
-                    <span className="technical-meta">STATUS: VERIFIED</span>
+                    <span className="technical-meta" style={{ color: '#10B981' }}>
+                      VERIFIED
+                    </span>
                   </div>
 
                   <div
@@ -131,8 +140,8 @@ export const HowItWorks: React.FC = () => {
                       width: '100%',
                       aspectRatio: '16/10',
                       overflow: 'hidden',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      position: 'relative'
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 255, 255, 0.07)'
                     }}
                   >
                     <img
@@ -144,26 +153,18 @@ export const HowItWorks: React.FC = () => {
                         objectFit: 'cover',
                         filter: 'grayscale(100%) contrast(1.15)',
                         opacity: 0.85,
-                        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+                        transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.04)')}
                       onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                     />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        border: '1px solid rgba(0, 255, 204, 0.15)',
-                        pointerEvents: 'none'
-                      }}
-                    />
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px' }}>
                     <span className="technical-meta" style={{ fontSize: '9px' }}>
                       TELEMETRY_PIPELINE: ACTIVE
                     </span>
-                    <span className="technical-meta" style={{ fontSize: '9px', color: 'var(--accent-highlight)' }}>
+                    <span className="technical-meta" style={{ fontSize: '9px', color: '#818CF8' }}>
                       GROUNDED 100%
                     </span>
                   </div>

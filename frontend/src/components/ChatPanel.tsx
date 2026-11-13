@@ -36,25 +36,33 @@ const STARTER_PROMPTS = [
     icon: 'fa-bolt',
     title: 'Architectural Overview',
     desc: 'Module topology & core design patterns',
-    prompt: 'Analyze the high-level architecture of this repository, module boundaries, and core design patterns.'
+    prompt: 'Analyze the high-level architecture of this repository, module boundaries, and core design patterns.',
+    color: '#818CF8',
+    bg: 'rgba(99, 102, 241, 0.12)'
   },
   {
     icon: 'fa-diagram-project',
     title: 'Dependency Bottlenecks',
     desc: 'Coupling analysis & circular references',
-    prompt: 'Examine the repository dependency structure. Identify tightly-coupled files or potential architectural bottlenecks.'
+    prompt: 'Examine the repository dependency structure. Identify tightly-coupled files or potential architectural bottlenecks.',
+    color: '#FB7185',
+    bg: 'rgba(244, 63, 94, 0.12)'
   },
   {
     icon: 'fa-network-wired',
     title: 'Data & State Flow',
     desc: 'Client-to-server contracts & data pathways',
-    prompt: 'Explain the data and state lifecycle in this project, tracing interactions from UI components to state and services.'
+    prompt: 'Explain the data and state lifecycle in this project, tracing interactions from UI components to state and services.',
+    color: '#34D399',
+    bg: 'rgba(16, 185, 129, 0.12)'
   },
   {
     icon: 'fa-gauge-high',
     title: 'Performance Audit',
     desc: 'Render latency & code-splitting check',
-    prompt: 'Conduct a performance and bundle size audit. Point out heavy imports, render risks, and optimization opportunities.'
+    prompt: 'Conduct a performance and bundle size audit. Point out heavy imports, render risks, and optimization opportunities.',
+    color: '#FBBF24',
+    bg: 'rgba(245, 158, 11, 0.12)'
   }
 ];
 
@@ -86,27 +94,28 @@ class SceneErrorBoundary extends React.Component<
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#080808',
-            color: 'var(--text-secondary)',
+            backgroundColor: '#0B0D12',
+            color: '#94A3B8',
             gap: '1rem',
             fontFamily: 'Inter, sans-serif'
           }}
         >
           <i
             className="fa-solid fa-cube"
-            style={{ fontSize: '2.5rem', color: 'var(--accent-highlight)' }}
+            style={{ fontSize: '2.25rem', color: '#38BDF8' }}
           />
-          <span style={{ fontSize: '0.95rem' }}>3D Space encountered a render glitch.</span>
+          <span style={{ fontSize: '0.92rem', color: '#F1F5F9' }}>3D Viewport encountered a render glitch.</span>
           <button
             onClick={() => this.setState({ hasError: false })}
             style={{
               padding: '8px 18px',
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
-              color: 'var(--ink)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
+              backgroundColor: '#4F46E5',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '0.82rem',
+              fontSize: '0.78rem',
+              fontWeight: 500,
               fontFamily: "'JetBrains Mono', monospace"
             }}
           >
@@ -120,12 +129,12 @@ class SceneErrorBoundary extends React.Component<
 }
 
 export const ChatPanel: React.FC = () => {
-  const { pinnedContextNode, setPinnedContextNode, focusNode, graph } = useOrchestrator();
+  const { pinnedContextNode, setPinnedContextNode, focusNode, graph, selectedNode } = useOrchestrator();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       sender: 'ai',
-      text: 'Orchestrator online. 3D spatial mapping active. Click any node in the 3D graph to inspect files, focus the camera, or pin code to prompt context.',
+      text: 'Orchestrator online. 3D spatial mapping active. Select any 3D node to inspect files, focus the camera, or pin code to prompt context.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       modelUsed: 'gpt-oss:120b'
     }
@@ -133,7 +142,7 @@ export const ChatPanel: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
-  const [chatWidth, setChatWidth] = useState(42);
+  const [chatWidth, setChatWidth] = useState(38);
   const [selectedModel, setSelectedModel] = useState('gpt-oss:120b');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -156,8 +165,8 @@ export const ChatPanel: React.FC = () => {
       if (newMsgElements.length > 0) {
         gsap.fromTo(
           newMsgElements,
-          { y: 12, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.35, ease: 'power3.out', stagger: 0.04 }
+          { y: 10, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out', stagger: 0.04 }
         );
         newMsgElements.forEach((el) => el.classList.add('animated'));
       }
@@ -193,7 +202,7 @@ export const ChatPanel: React.FC = () => {
       rafId = requestAnimationFrame(() => {
         rafId = null;
         const newChatWidth = 100 - (e.clientX / window.innerWidth) * 100;
-        if (newChatWidth > 25 && newChatWidth < 70) {
+        if (newChatWidth > 24 && newChatWidth < 65) {
           setChatWidth(newChatWidth);
         }
       });
@@ -380,512 +389,588 @@ export const ChatPanel: React.FC = () => {
     ]);
   }, [selectedModel]);
 
+  const activeSelectionLabel = selectedNode
+    ? (selectedNode.type === 'folder' ? `${selectedNode.path.replace(/\/+$/, '')}/` : selectedNode.name)
+    : 'None';
+
+  const contextBadgeText = pinnedContextNode
+    ? `@${pinnedContextNode.path}`
+    : selectedNode
+    ? `@${selectedNode.path}`
+    : `@${graph.repoName || 'Code-atlas'}`;
+
   return (
     <div
-      className="responsive-stack"
       style={{
+        width: '100vw',
         height: '100vh',
-        width: '100%',
         display: 'flex',
-        backgroundColor: '#080808',
-        overflow: 'hidden'
+        flexDirection: 'column',
+        backgroundColor: '#0B0D12',
+        overflow: 'hidden',
+        userSelect: 'none'
       }}
     >
-      {/* 3D Scene Viewport Pane */}
-      <div
-        className="mobile-scene"
+      {/* 2.A: UNIFIED TOP APPLICATION TITLEBAR (44px, Full Width) */}
+      <header
         style={{
-          width: `${100 - chatWidth}%`,
-          height: '100%',
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: '#080808'
-        }}
-      >
-        {/* Cockpit Back to Landing Button */}
-        <Link
-          to="/"
-          className="glass-hud"
-          title="Return to Landing Page (ESC)"
-          style={{
-            position: 'absolute',
-            top: '16px',
-            left: '16px',
-            zIndex: 50,
-            color: 'var(--text-primary)',
-            borderRadius: '20px',
-            padding: '7px 14px',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontWeight: 500,
-            fontSize: '0.74rem',
-            letterSpacing: '0.04em',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            textDecoration: 'none',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <i className="fa-solid fa-arrow-left" style={{ fontSize: '0.75rem' }} />
-          <span>ATLAS</span>
-          <span className="orchestrator-kbd" style={{ fontSize: '0.6rem' }}>
-            ESC
-          </span>
-        </Link>
-
-        {/* 3D Viewport Controls & HUD Overlays */}
-        <RepoSearchBar />
-        <TelemetryHUD />
-        <NodeInspector />
-
-        {/* Dynamic 3D Canvas */}
-        <SceneErrorBoundary>
-          <Scene />
-        </SceneErrorBoundary>
-
-        {/* Bottom Left Cartography Watermark & Matrix Readout */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '18px',
-            left: '20px',
-            pointerEvents: 'none',
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '2px'
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'Comvota, sans-serif',
-              fontSize: '1.4rem',
-              color: 'var(--ink)',
-              letterSpacing: '0.08em',
-              lineHeight: 1
-            }}
-          >
-            CODEATLAS
-          </span>
-          <span
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '0.62rem',
-              color: 'var(--text-muted)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase'
-            }}
-          >
-            3D CARTOGRAPHY ENGINE // MATRIX [ACTIVE]
-          </span>
-        </div>
-      </div>
-
-      {/* Resizer Handle */}
-      <div
-        onMouseDown={() => {
-          isDragging.current = true;
-          document.body.style.cursor = 'col-resize';
-        }}
-        style={{
-          width: '5px',
-          cursor: 'col-resize',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-          zIndex: 30,
+          height: '44px',
+          width: '100%',
+          backgroundColor: '#111318',
+          borderBottom: '1px solid #222631',
+          padding: '0 12px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.2s ease',
-          position: 'relative'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--accent-highlight)';
-        }}
-        onMouseLeave={(e) => {
-          if (!isDragging.current) {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-          }
+          justifyContent: 'space-between',
+          flexShrink: 0,
+          zIndex: 60
         }}
       >
-        <div
-          style={{
-            width: '2px',
-            height: '24px',
-            backgroundColor: 'rgba(255, 255, 255, 0.3)',
-            borderRadius: '1px'
-          }}
-        />
-      </div>
+        {/* Left: Navigation & Active Repo Breadcrumb */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          <Link
+            to="/"
+            title="Return to Landing Page (ESC)"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              backgroundColor: '#1A1D24',
+              color: '#CBD5E1',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 500,
+              textDecoration: 'none',
+              transition: 'background-color 0.18s ease'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#242832')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#1A1D24')}
+          >
+            <i className="fa-solid fa-arrow-left" style={{ fontSize: '11px', color: '#94A3B8' }} />
+            <span>Atlas</span>
+          </Link>
 
-      {/* Right AI Orchestrator Chat Pane */}
-      <div
-        className="mobile-chat"
-        style={{
-          width: `${chatWidth}%`,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: '#0a0c10',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
-          zIndex: 20
-        }}
-      >
-        {/* Chat Studio Header */}
-        <div
-          style={{
-            padding: '12px 18px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'rgba(14, 17, 22, 0.95)',
-            backdropFilter: 'blur(16px)',
-            gap: '12px'
-          }}
-        >
-          {/* Header Title & Workspace Telemetry */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          <div style={{ width: '1px', height: '16px', backgroundColor: '#262A36' }} />
+
+          {/* Repo Breadcrumb */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <i className="fa-brands fa-github" style={{ color: '#94A3B8', fontSize: '13px' }} />
             <span
               style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-highlight)',
-                display: 'inline-block',
-                boxShadow: '0 0 10px rgba(0, 255, 204, 0.7)',
+                fontSize: '12.5px',
+                fontWeight: 500,
+                color: '#E2E8F0',
+                fontFamily: 'Inter, sans-serif',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '220px'
+              }}
+              title={graph.repoName}
+            >
+              {graph.repoName || 'mohammad43268 / Code-atlas'}
+            </span>
+
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: '#1E293B',
+                color: '#38BDF8',
+                fontSize: '11px',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 500,
+                padding: '2px 7px',
+                borderRadius: '4px',
                 flexShrink: 0
               }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.04em',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'Inter, sans-serif'
-                  }}
-                >
-                  ARCHITECTURE COPILOT
-                </span>
-                <span
-                  className="orchestrator-kbd"
-                  style={{
-                    fontSize: '0.62rem',
-                    color: 'var(--accent-highlight)',
-                    borderColor: 'rgba(0, 255, 204, 0.25)'
-                  }}
-                >
-                  LIVE
-                </span>
-              </div>
-              <span
-                style={{
-                  fontSize: '0.68rem',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  color: 'var(--text-muted)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}
-                title={graph.repoName}
-              >
-                {graph.repoName} ({graph.branch})
-              </span>
-            </div>
-          </div>
-
-          {/* Model Selector & Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <div ref={dropdownRef} style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px',
-                  padding: '5px 12px',
-                  fontSize: '0.74rem',
-                  fontFamily: "'JetBrains Mono', monospace",
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
-              >
-                <i className="fa-solid fa-microchip" style={{ color: 'var(--accent-highlight)', fontSize: '0.72rem' }} />
-                <span>{selectedModel}</span>
-                <i
-                  className="fa-solid fa-chevron-down"
-                  style={{
-                    fontSize: '0.65rem',
-                    transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s',
-                    color: 'var(--text-muted)'
-                  }}
-                />
-              </button>
-
-              {/* Model Picker Flyout */}
-              {isDropdownOpen && (
-                <div
-                  className="glass-hud"
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: '0',
-                    width: '290px',
-                    marginTop: '8px',
-                    borderRadius: '12px',
-                    padding: '6px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    zIndex: 100
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '6px 10px',
-                      fontSize: '0.66rem',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      textTransform: 'uppercase',
-                      color: 'var(--text-muted)',
-                      letterSpacing: '0.06em'
-                    }}
-                  >
-                    Select Inference Model
-                  </div>
-                  {MODEL_OPTIONS.map((m) => {
-                    const isCurrent = m.id === selectedModel;
-                    return (
-                      <div
-                        key={m.id}
-                        onClick={() => {
-                          setSelectedModel(m.id);
-                          setIsDropdownOpen(false);
-                        }}
-                        style={{
-                          padding: '8px 10px',
-                          cursor: 'pointer',
-                          borderRadius: '8px',
-                          backgroundColor: isCurrent ? 'rgba(0, 255, 204, 0.1)' : 'transparent',
-                          border: isCurrent ? '1px solid rgba(0, 255, 204, 0.3)' : '1px solid transparent',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '2px',
-                          transition: 'all 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isCurrent) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isCurrent) e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span
-                            style={{
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: '0.78rem',
-                              fontWeight: 600,
-                              color: isCurrent ? 'var(--accent-highlight)' : 'var(--text-primary)'
-                            }}
-                          >
-                            {m.label}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: '0.62rem',
-                              padding: '1px 5px',
-                              borderRadius: '4px',
-                              background: 'rgba(255, 255, 255, 0.08)',
-                              color: 'var(--text-muted)'
-                            }}
-                          >
-                            {m.tag}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                          {m.desc}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Clear Chat Button */}
-            <button
-              type="button"
-              onClick={handleClearChat}
-              title="Clear Session History"
-              style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.76rem',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#ff5252';
-                e.currentTarget.style.borderColor = 'rgba(255, 82, 82, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-              }}
             >
-              <i className="fa-solid fa-trash-can" />
-            </button>
+              <span>⎇</span>
+              <span>{graph.branch || 'main'}</span>
+            </span>
           </div>
         </div>
 
-        {/* Message Stream */}
+        {/* Center: Command Palette / Repo Input Bar */}
+        <RepoSearchBar />
+
+        {/* Right: Telemetry Badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          <div
+            style={{
+              fontSize: '11px',
+              fontFamily: "'JetBrains Mono', monospace",
+              backgroundColor: '#171A21',
+              border: '1px solid #232733',
+              borderRadius: '5px',
+              padding: '2px 8px',
+              color: '#818CF8'
+            }}
+          >
+            <strong>{graph.nodes.length}</strong> Nodes
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontFamily: "'JetBrains Mono', monospace",
+              backgroundColor: '#171A21',
+              border: '1px solid #232733',
+              borderRadius: '5px',
+              padding: '2px 8px',
+              color: '#38BDF8'
+            }}
+          >
+            <strong>{graph.connections.length}</strong> Edges
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontFamily: "'JetBrains Mono', monospace",
+              backgroundColor: '#171A21',
+              border: '1px solid #232733',
+              borderRadius: '5px',
+              padding: '2px 8px',
+              color: '#F59E0B'
+            }}
+          >
+            <strong>{graph.totalFolders}</strong> Dirs
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontFamily: "'JetBrains Mono', monospace",
+              backgroundColor: '#171A21',
+              border: '1px solid #232733',
+              borderRadius: '5px',
+              padding: '2px 8px',
+              color: '#10B981'
+            }}
+          >
+            <strong>{graph.totalFiles}</strong> Files
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN DOCKED WORKSPACE (3D Canvas + Copilot Sidebar) */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+      >
+        {/* Left: 3D Viewport Pane */}
         <div
-          ref={messagesContainerRef}
           style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '18px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            backgroundColor: '#0a0c10'
+            width: `${100 - chatWidth}%`,
+            height: '100%',
+            position: 'relative',
+            overflow: 'hidden',
+            backgroundColor: '#0B0D12'
           }}
         >
-          {/* Welcome Card & Starter Prompts if fresh session */}
-          {messages.length === 1 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '14px',
-                padding: '16px',
-                borderRadius: '14px',
-                background: 'rgba(16, 20, 26, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
+          {/* Top-Left Floating Active Node Inspector Chip */}
+          <NodeInspector />
+
+          {/* Bottom-Center Figma Toolbar (Reset | Orbit | Grid | 1x) */}
+          <TelemetryHUD />
+
+          {/* 3D WebGL Canvas */}
+          <SceneErrorBoundary>
+            <Scene />
+          </SceneErrorBoundary>
+        </div>
+
+        {/* 1px Resizer Handle */}
+        <div
+          onMouseDown={() => {
+            isDragging.current = true;
+            document.body.style.cursor = 'col-resize';
+          }}
+          style={{
+            width: '4px',
+            cursor: 'col-resize',
+            backgroundColor: '#1E222B',
+            zIndex: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background-color 0.18s ease',
+            position: 'relative'
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#6366F1')}
+          onMouseLeave={(e) => {
+            if (!isDragging.current) e.currentTarget.style.backgroundColor = '#1E222B';
+          }}
+        />
+
+        {/* Right: Architecture Copilot Sidebar (Cursor / Discord Grade) */}
+        <div
+          style={{
+            width: `${chatWidth}%`,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#14171F',
+            borderLeft: '1px solid #222631',
+            zIndex: 20
+          }}
+        >
+          {/* 5.A: Compact Panel Header (44px) */}
+          <div
+            style={{
+              height: '44px',
+              padding: '0 14px',
+              borderBottom: '1px solid #222631',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: '#14171F',
+              flexShrink: 0
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-sparkles" style={{ color: '#818CF8', fontSize: '13px' }} />
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#F1F5F9',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                Architecture Copilot
+              </span>
+              <span
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                  color: '#34D399',
+                  borderRadius: '4px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  padding: '1px 6px',
+                  letterSpacing: '0.04em'
+                }}
+              >
+                Live
+              </span>
+            </div>
+
+            {/* Model Selector & Trash Action */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: 'rgba(0, 255, 204, 0.12)',
-                    border: '1px solid var(--accent-highlight)',
+                    backgroundColor: '#1B1F2A',
+                    color: '#E2E8F0',
+                    border: '1px solid #2A303F',
+                    borderRadius: '6px',
+                    padding: '3px 8px',
+                    fontSize: '11.5px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--accent-highlight)'
+                    gap: '6px',
+                    transition: 'border-color 0.18s ease'
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#6366F1')}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#2A303F')}
                 >
-                  <i className="fa-solid fa-cubes-stacked" style={{ fontSize: '0.9rem' }} />
-                </div>
+                  <i className="fa-solid fa-microchip" style={{ color: '#818CF8', fontSize: '10px' }} />
+                  <span>{selectedModel}</span>
+                  <i
+                    className="fa-solid fa-chevron-down"
+                    style={{
+                      fontSize: '9px',
+                      color: '#64748B',
+                      transform: isDropdownOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.18s'
+                    }}
+                  />
+                </button>
+
+                {isDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      right: 0,
+                      width: '280px',
+                      borderRadius: '8px',
+                      padding: '6px',
+                      backgroundColor: '#161922',
+                      border: '1px solid #282E3D',
+                      boxShadow: '0 16px 36px rgba(0, 0, 0, 0.65)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      zIndex: 100
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '10px',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        textTransform: 'uppercase',
+                        color: '#64748B',
+                        letterSpacing: '0.06em'
+                      }}
+                    >
+                      Inference Engine
+                    </div>
+                    {MODEL_OPTIONS.map((m) => {
+                      const isCurrent = m.id === selectedModel;
+                      return (
+                        <div
+                          key={m.id}
+                          onClick={() => {
+                            setSelectedModel(m.id);
+                            setIsDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '6px 8px',
+                            cursor: 'pointer',
+                            borderRadius: '6px',
+                            backgroundColor: isCurrent ? 'rgba(99, 102, 241, 0.14)' : 'transparent',
+                            border: isCurrent ? '1px solid rgba(99, 102, 241, 0.35)' : '1px solid transparent',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isCurrent) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isCurrent) e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span
+                              style={{
+                                fontFamily: "'JetBrains Mono', monospace",
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: isCurrent ? '#818CF8' : '#F1F5F9'
+                              }}
+                            >
+                              {m.label}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '9px',
+                                padding: '1px 5px',
+                                borderRadius: '3px',
+                                background: 'rgba(255, 255, 255, 0.06)',
+                                color: '#94A3B8'
+                              }}
+                            >
+                              {m.tag}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '10px', color: '#64748B', lineHeight: 1.3 }}>
+                            {m.desc}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleClearChat}
+                title="Clear Session History"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid transparent',
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#EF4444';
+                  e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#64748B';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <i className="fa-solid fa-trash-can" />
+              </button>
+            </div>
+          </div>
+
+          {/* Message Stream */}
+          <div
+            ref={messagesContainerRef}
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '14px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              backgroundColor: '#14171F'
+            }}
+          >
+            {/* 5.B: Refined Quick-Action Starter Cards (No giant outer container box) */}
+            {messages.length === 1 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div>
                   <h3
                     style={{
-                      fontSize: '0.92rem',
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '12.5px',
                       fontWeight: 600,
-                      color: 'var(--text-primary)',
+                      color: '#F1F5F9',
                       margin: 0
                     }}
                   >
-                    Spatial Code Intelligence & Copilot
+                    Spatial Code Intelligence &amp; Copilot
                   </h3>
-                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: 0 }}>
+                  <p style={{ fontSize: '11px', color: '#64748B', margin: '2px 0 0 0' }}>
                     Select any 3D node to inspect or launch an architectural prompt below.
                   </p>
                 </div>
-              </div>
 
-              {/* 4 Quick Starter Prompt Pills */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
-                {STARTER_PROMPTS.map((sp) => (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
+                  {STARTER_PROMPTS.map((sp) => (
+                    <button
+                      key={sp.title}
+                      type="button"
+                      onClick={() => executeSend(sp.prompt)}
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: '#1A1E29',
+                        border: '1px solid #252A3A',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        transition: 'all 0.18s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#212634';
+                        e.currentTarget.style.borderColor = '#384152';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#1A1E29';
+                        e.currentTarget.style.borderColor = '#252A3A';
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '6px',
+                          backgroundColor: sp.bg,
+                          color: sp.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '11px'
+                        }}
+                      >
+                        <i className={`fa-solid ${sp.icon}`} />
+                      </div>
+                      <div>
+                        <div
+                          style={{
+                            fontSize: '12.5px',
+                            fontWeight: 500,
+                            color: '#E2E8F0',
+                            fontFamily: 'Inter, sans-serif'
+                          }}
+                        >
+                          {sp.title}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#64748B', lineHeight: 1.35, marginTop: '2px' }}>
+                          {sp.desc}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5.C: IDE-Grade Chat Messages */}
+            {messages.map((msg) => {
+              const isUser = msg.sender === 'user';
+              return (
+                <div
+                  key={msg.id}
+                  className="chat-message"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    width: '100%'
+                  }}
+                >
+                  {/* Clean Discord/Cursor Style Header */}
                   <div
-                    key={sp.title}
-                    className="prompt-suggestion-card"
-                    onClick={() => executeSend(sp.prompt)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0 2px'
+                    }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <i
-                        className={`fa-solid ${sp.icon}`}
-                        style={{ color: 'var(--accent-highlight)', fontSize: '0.75rem' }}
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '5px',
+                          background: isUser
+                            ? 'linear-gradient(135deg, #334155, #1E293B)'
+                            : 'linear-gradient(135deg, #6366F1, #4F46E5)',
+                          color: '#FFFFFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '9px',
+                          flexShrink: 0
+                        }}
+                      >
+                        <i className={`fa-solid ${isUser ? 'fa-user' : 'fa-robot'}`} />
+                      </div>
                       <span
                         style={{
-                          fontSize: '0.78rem',
+                          fontSize: '12.5px',
                           fontWeight: 600,
-                          color: 'var(--text-primary)',
+                          color: isUser ? '#94A3B8' : '#E2E8F0',
                           fontFamily: 'Inter, sans-serif'
                         }}
                       >
-                        {sp.title}
+                        {isUser ? 'Operator' : 'CodeAtlas AI'}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
+                        {msg.timestamp}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-                      {sp.desc}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Render Messages */}
-          {messages.map((msg) => {
-            const isUser = msg.sender === 'user';
-            return (
-              <div
-                key={msg.id}
-                className="chat-message"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '6px',
-                  alignSelf: isUser ? 'flex-end' : 'stretch',
-                  maxWidth: isUser ? '85%' : '100%'
-                }}
-              >
-                {/* Message Header Strip */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: isUser ? 'flex-end' : 'space-between',
-                    gap: '8px',
-                    padding: '0 4px',
-                    fontSize: '0.68rem',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    color: 'var(--text-muted)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ color: isUser ? 'var(--text-muted)' : 'var(--accent-highlight)', fontWeight: 600 }}>
-                      {isUser ? '[OPERATOR]' : '[ORCHESTRATOR // SPATIAL-AI]'}
-                    </span>
-                    <span>{msg.timestamp}</span>
-                  </div>
-
-                  {!isUser && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {!isUser && (
                       <button
                         type="button"
                         onClick={() => handleCopyMessage(msg.id, msg.text)}
@@ -893,9 +978,10 @@ export const ChatPanel: React.FC = () => {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: copiedMessageId === msg.id ? 'var(--accent-highlight)' : 'var(--text-muted)',
+                          color: copiedMessageId === msg.id ? '#34D399' : '#64748B',
                           cursor: 'pointer',
-                          fontSize: '0.7rem',
+                          fontSize: '10.5px',
+                          fontFamily: 'Inter, sans-serif',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '4px',
@@ -905,220 +991,217 @@ export const ChatPanel: React.FC = () => {
                         <i className={`fa-solid ${copiedMessageId === msg.id ? 'fa-check' : 'fa-copy'}`} />
                         <span>{copiedMessageId === msg.id ? 'Copied' : 'Copy'}</span>
                       </button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* If user sent message with pinned 3D node tag */}
-                {msg.contextNodePath && (
-                  <button
-                    type="button"
-                    onClick={() => focusNode(msg.contextNodePath!)}
+                  {/* Context Node focus badge */}
+                  {msg.contextNodePath && (
+                    <button
+                      type="button"
+                      onClick={() => focusNode(msg.contextNodePath!)}
+                      style={{
+                        alignSelf: 'flex-start',
+                        background: 'rgba(56, 189, 248, 0.08)',
+                        border: '1px solid rgba(56, 189, 248, 0.25)',
+                        borderRadius: '4px',
+                        padding: '2px 8px',
+                        color: '#38BDF8',
+                        fontSize: '11px',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        marginLeft: '28px'
+                      }}
+                      title="Focus this node in 3D scene"
+                    >
+                      <i className="fa-solid fa-location-crosshairs" style={{ fontSize: '10px' }} />
+                      <span>3D Focus: {msg.contextNodePath}</span>
+                    </button>
+                  )}
+
+                  {/* Message Body Card */}
+                  <div
                     style={{
-                      alignSelf: isUser ? 'flex-end' : 'flex-start',
-                      background: 'rgba(0, 255, 204, 0.08)',
-                      border: '1px solid rgba(0, 255, 204, 0.3)',
-                      borderRadius: '6px',
-                      padding: '3px 8px',
-                      color: 'var(--accent-highlight)',
-                      fontSize: '0.72rem',
-                      fontFamily: "'JetBrains Mono', monospace",
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      transition: 'all 0.15s ease'
+                      marginLeft: '28px',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: isUser ? '#181C26' : '#191D26',
+                      border: '1px solid #232836',
+                      color: '#CBD5E1',
+                      fontSize: '13px',
+                      lineHeight: 1.55,
+                      fontFamily: 'Inter, sans-serif',
+                      overflowX: 'auto'
                     }}
-                    title="Click to jump camera to this node in 3D"
                   >
-                    <i className="fa-solid fa-location-crosshairs" style={{ fontSize: '0.7rem' }} />
-                    <span>3D FOCUS: {msg.contextNodePath}</span>
-                  </button>
-                )}
-
-                {/* Message Body Card */}
-                <div
-                  style={{
-                    padding: isUser ? '10px 14px' : '14px 18px',
-                    borderRadius: '12px',
-                    backgroundColor: isUser ? 'rgba(26, 32, 42, 0.85)' : 'rgba(16, 19, 25, 0.85)',
-                    color: 'var(--text-primary)',
-                    border: isUser
-                      ? '1px solid rgba(0, 255, 204, 0.25)'
-                      : '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: isUser
-                      ? '0 4px 16px rgba(0,0,0,0.3)'
-                      : '0 8px 24px rgba(0,0,0,0.4)',
-                    fontSize: '0.88rem',
-                    lineHeight: 1.6,
-                    fontFamily: 'Inter, sans-serif',
-                    overflowX: 'auto'
-                  }}
-                >
-                  {isUser ? (
-                    <ReactMarkdown>{msg.text}</ReactMarkdown>
-                  ) : (
-                    <AIMessageRenderer content={msg.text} onNodeClick={focusNode} />
-                  )}
+                    {isUser ? (
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    ) : (
+                      <AIMessageRenderer content={msg.text} onNodeClick={focusNode} />
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Active Generation Shimmer Loader */}
-          {isLoading && (
-            <div
-              className="chat-message"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '10px',
-                background: 'rgba(16, 19, 25, 0.85)',
-                border: '1px solid rgba(0, 255, 204, 0.2)',
-                width: 'fit-content'
-              }}
-            >
-              <i className="fa-solid fa-circle-notch fa-spin" style={{ color: 'var(--accent-highlight)', fontSize: '0.85rem' }} />
-              <span
+            {/* Active Generation Shimmer Loader */}
+            {isLoading && (
+              <div
                 style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: '0.74rem',
-                  color: 'var(--text-secondary)'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginLeft: '28px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  backgroundColor: '#191D26',
+                  border: '1px solid #232836',
+                  width: 'fit-content'
                 }}
               >
-                Synthesizing architectural reasoning...
-              </span>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Dock & Context Pin Bar */}
-        <div
-          style={{
-            padding: '14px 18px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            backgroundColor: 'rgba(14, 17, 22, 0.95)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}
-        >
-          {/* Active Context Indicators */}
-          {(pinnedContextNode || attachedFile) && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {pinnedContextNode && (
-                <div
+                <i className="fa-solid fa-circle-notch fa-spin" style={{ color: '#818CF8', fontSize: '12px' }} />
+                <span
                   style={{
-                    padding: '4px 10px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    backgroundColor: 'rgba(0, 255, 204, 0.1)',
-                    border: '1px solid var(--accent-highlight)',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontFamily: "'JetBrains Mono', monospace"
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '11.5px',
+                    color: '#94A3B8'
                   }}
                 >
-                  <i className="fa-solid fa-thumbtack" style={{ color: 'var(--accent-highlight)', fontSize: '0.72rem' }} />
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                    3D Node: <strong style={{ color: 'var(--accent-highlight)' }}>{pinnedContextNode.path}</strong>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setPinnedContextNode(null)}
-                    title="Unpin 3D Context"
-                    style={{
-                      border: 'none',
-                      background: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      padding: '0 2px',
-                      fontSize: '0.78rem'
-                    }}
-                  >
-                    <i className="fa-solid fa-xmark" />
-                  </button>
-                </div>
-              )}
+                  Synthesizing architectural reasoning...
+                </span>
+              </div>
+            )}
 
-              {attachedFile && (
-                <div
-                  style={{
-                    padding: '4px 10px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontFamily: "'JetBrains Mono', monospace"
-                  }}
-                >
-                  <i className="fa-solid fa-file-code" style={{ color: 'var(--text-secondary)', fontSize: '0.72rem' }} />
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{attachedFile.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setAttachedFile(null)}
-                    style={{
-                      border: 'none',
-                      background: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      padding: '0 2px',
-                      fontSize: '0.78rem'
-                    }}
-                  >
-                    <i className="fa-solid fa-xmark" />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+            <div ref={messagesEndRef} />
+          </div>
 
-          {/* Form Command Bar */}
-          <form
-            onSubmit={handleSend}
+          {/* 5.D: Cursor-Style Bottom Composer Box (Single Send Button Bug Fix) */}
+          <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              backgroundColor: 'rgba(20, 24, 32, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '12px',
-              padding: '8px 12px',
-              gap: '6px',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.45)',
-              transition: 'border-color 0.2s ease'
+              padding: '10px 12px 12px',
+              backgroundColor: '#14171F',
+              borderTop: '1px solid #222631'
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(0, 255, 204, 0.4)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)')}
           >
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask the 3D orchestrator, analyze architecture, or trace data flows..."
+            <form
+              onSubmit={handleSend}
               style={{
-                width: '100%',
-                border: 'none',
-                outline: 'none',
-                backgroundColor: 'transparent',
-                color: 'var(--text-primary)',
-                fontSize: '0.88rem',
-                fontFamily: 'Inter, sans-serif',
-                padding: '4px 2px'
+                backgroundColor: '#1A1E29',
+                border: '1px solid #2B3142',
+                borderRadius: '10px',
+                padding: '10px 12px',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                transition: 'border-color 0.18s ease'
               }}
-              disabled={isLoading}
-            />
+              onFocusCapture={(e) => (e.currentTarget.style.borderColor = '#6366F1')}
+              onBlurCapture={(e) => (e.currentTarget.style.borderColor = '#2B3142')}
+            >
+              {/* Top Context Chip Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    backgroundColor: '#242938',
+                    color: '#94A3B8',
+                    fontSize: '11px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    padding: '2px 7px',
+                    borderRadius: '4px',
+                    border: '1px solid #2E3547'
+                  }}
+                >
+                  <i className="fa-solid fa-at" style={{ fontSize: '9px', color: '#818CF8' }} />
+                  <span>{contextBadgeText}</span>
+                  {pinnedContextNode && (
+                    <button
+                      type="button"
+                      onClick={() => setPinnedContextNode(null)}
+                      title="Unpin 3D Context"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#64748B',
+                        cursor: 'pointer',
+                        padding: '0 2px',
+                        fontSize: '10px',
+                        marginLeft: '2px'
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
 
-            {/* Bottom Dock Controls */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {attachedFile && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                      color: '#818CF8',
+                      fontSize: '11px',
+                      fontFamily: "'JetBrains Mono', monospace",
+                      padding: '2px 7px',
+                      borderRadius: '4px',
+                      border: '1px solid rgba(99, 102, 241, 0.3)'
+                    }}
+                  >
+                    <i className="fa-solid fa-file-code" style={{ fontSize: '10px' }} />
+                    <span>{attachedFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAttachedFile(null)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#64748B',
+                        cursor: 'pointer',
+                        padding: '0 2px',
+                        fontSize: '10px'
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+              </div>
+
+              {/* Text Input */}
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask Copilot about architecture, dependencies, or @nodes..."
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#F1F5F9',
+                  fontSize: '13px',
+                  fontFamily: 'Inter, sans-serif',
+                  padding: '2px 0'
+                }}
+              />
+
+              {/* Bottom Action Row: Attach on left, Single primary Send button on right */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '4px'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -1126,21 +1209,21 @@ export const ChatPanel: React.FC = () => {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--text-muted)',
+                    color: '#94A3B8',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '0.75rem',
-                    padding: '2px 6px',
-                    borderRadius: '6px',
-                    transition: 'color 0.2s ease'
+                    gap: '5px',
+                    fontSize: '11.5px',
+                    padding: '3px 6px',
+                    borderRadius: '4px',
+                    transition: 'color 0.15s ease'
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#E2E8F0')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#94A3B8')}
                 >
                   <i className="fa-solid fa-paperclip" />
-                  <span style={{ fontSize: '0.72rem', fontFamily: "'JetBrains Mono', monospace" }}>Attach</span>
+                  <span>Attach</span>
                 </button>
                 <input
                   type="file"
@@ -1150,44 +1233,91 @@ export const ChatPanel: React.FC = () => {
                   accept=".txt,.js,.ts,.tsx,.json,.md,.py,.cpp,.h,.css"
                 />
 
-                <span style={{ color: 'rgba(255, 255, 255, 0.15)' }}>|</span>
-
-                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                  <span className="orchestrator-kbd">↵ SEND</span>
-                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading || (!input.trim() && !attachedFile)}
+                  style={{
+                    backgroundColor: input.trim() || attachedFile ? '#4F46E5' : '#252936',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '5px 12px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    cursor: isLoading || (!input.trim() && !attachedFile) ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    transition: 'background-color 0.18s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (input.trim() || attachedFile) e.currentTarget.style.backgroundColor = '#4338CA';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (input.trim() || attachedFile) e.currentTarget.style.backgroundColor = '#4F46E5';
+                  }}
+                >
+                  {isLoading ? (
+                    <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '11px' }} />
+                  ) : (
+                    <>
+                      <span>Send</span>
+                      <span>↵</span>
+                    </>
+                  )}
+                </button>
               </div>
-
-              <button
-                type="submit"
-                disabled={isLoading || (!input.trim() && !attachedFile)}
-                style={{
-                  background: input.trim() || attachedFile ? 'var(--accent-highlight)' : 'rgba(255, 255, 255, 0.08)',
-                  color: input.trim() || attachedFile ? '#080808' : 'var(--text-muted)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 14px',
-                  fontSize: '0.76rem',
-                  fontWeight: 700,
-                  cursor: isLoading || (!input.trim() && !attachedFile) ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {isLoading ? (
-                  <i className="fa-solid fa-circle-notch fa-spin" />
-                ) : (
-                  <>
-                    <span>Send</span>
-                    <i className="fa-solid fa-arrow-up" style={{ fontSize: '0.7rem' }} />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
+
+      {/* 2.B: BOTTOM DESKTOP STATUS BAR (24px, Full Width) */}
+      <footer
+        style={{
+          height: '24px',
+          width: '100%',
+          backgroundColor: '#0E1015',
+          borderTop: '1px solid #1E222B',
+          fontSize: '11px',
+          color: '#64748B',
+          padding: '0 12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexShrink: 0,
+          zIndex: 60,
+          fontFamily: "'JetBrains Mono', monospace"
+        }}
+      >
+        {/* Left Status Readout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: '#10B981',
+              display: 'inline-block',
+              boxShadow: '0 0 6px #10B981'
+            }}
+          />
+          <span style={{ color: '#94A3B8' }}>Spatial Engine Ready</span>
+          <span style={{ color: '#2B3142' }}>|</span>
+          <span>
+            Active Selection: <strong style={{ color: '#E2E8F0' }}>{activeSelectionLabel}</strong>
+          </span>
+        </div>
+
+        {/* Right Status Readout */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span>WebGL2 Graph</span>
+          <span style={{ color: '#2B3142' }}>•</span>
+          <span>UTF-8</span>
+          <span style={{ color: '#2B3142' }}>•</span>
+          <span>AI: <strong style={{ color: '#818CF8' }}>{selectedModel}</strong></span>
+        </div>
+      </footer>
     </div>
   );
 };

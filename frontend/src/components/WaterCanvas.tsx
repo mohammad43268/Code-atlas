@@ -8,27 +8,22 @@ const WaterQuad = () => {
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const { size } = useThree();
   const targetMouseAlpha = useRef(0.0);
-  
+  const targetMouse = useRef(new THREE.Vector2(-1000, -1000));
+
   const uniforms = useMemo(() => {
     const parseColor = (hex: string) => new THREE.Color(hex);
     const ripples = new Array(16).fill(null).map(() => new THREE.Vector4(0, 0, 0, 0));
-    
+
     return {
       uTime: { value: 0 },
       uResolution: { value: new THREE.Vector2(size.width, size.height) },
-      uMouse: { value: new THREE.Vector2(-1000, -1000) }, 
+      uMouse: { value: new THREE.Vector2(-1000, -1000) },
       uMouseAlpha: { value: 0.0 },
       uRipples: { value: ripples },
-      uColorA: { value: parseColor('#020202') },
-      uColorB: { value: parseColor('#0b0b0b') },
-      uColorC: { value: parseColor('#000000') },
-      uMotion: { value: 1.0 },
-      uImage: { value: null },
-      uImageAspect: { value: 1.0 },
-      uImageLoaded: { value: 0.0 },
-      uImageReveal: { value: 0.0 },
-      uImageStrength: { value: 0.35 },
-      uRefract: { value: 0.03 }
+      uColorA: { value: parseColor('#050506') },
+      uColorB: { value: parseColor('#12141a') },
+      uColorC: { value: parseColor('#050506') },
+      uMotion: { value: 1.0 }
     };
   }, [size.width, size.height]);
 
@@ -41,51 +36,50 @@ const WaterQuad = () => {
   const rippleIndex = useRef(0);
   const lastRipplePos = useRef(new THREE.Vector2());
   const lastRippleTime = useRef(0);
-  const lastInteractionTime = useRef(0);
 
-  const spawnRipple = useCallback((x: number, y: number, strength: number) => {
-    if (!materialRef.current) return;
-    const aspectY = size.height;
-    const px = (x - 0.5 * size.width) / aspectY;
-    const py = (size.height - y - 0.5 * size.height) / aspectY;
-    const time = performance.now() / 1000;
-    const ripples = materialRef.current.uniforms.uRipples.value;
-    ripples[rippleIndex.current].set(px, py, time, strength);
-    rippleIndex.current = (rippleIndex.current + 1) % 16;
-    lastInteractionTime.current = time;
-  }, [size.height, size.width]);
+  const spawnRipple = useCallback(
+    (x: number, y: number, strength: number) => {
+      if (!materialRef.current) return;
+      const aspectY = size.height;
+      const px = (x - 0.5 * size.width) / aspectY;
+      const py = (size.height - y - 0.5 * size.height) / aspectY;
+      const time = materialRef.current.uniforms.uTime.value;
+      const ripples = materialRef.current.uniforms.uRipples.value;
+      ripples[rippleIndex.current].set(px, py, time, strength);
+      rippleIndex.current = (rippleIndex.current + 1) % 16;
+    },
+    [size.height, size.width]
+  );
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
-      if (!materialRef.current) return;
       const time = performance.now();
-      targetMouseAlpha.current = 1.0; // Fade in immediately on move
-      
+      targetMouseAlpha.current = 1.0;
+
       const aspectY = size.height;
       const px = (e.clientX - 0.5 * size.width) / aspectY;
-      const py = (size.height - e.clientY - 0.5 * size.height) / aspectY; 
-      materialRef.current.uniforms.uMouse.value.set(px, py);
+      const py = (size.height - e.clientY - 0.5 * size.height) / aspectY;
+      targetMouse.current.set(px, py);
 
-      if (time - lastRippleTime.current < 30) return;
-      
+      if (time - lastRippleTime.current < 32) return;
+
       const dx = e.clientX - lastRipplePos.current.x;
       const dy = e.clientY - lastRipplePos.current.y;
-      if (Math.sqrt(dx * dx + dy * dy) < 4) return;
-      
-      spawnRipple(e.clientX, e.clientY, 0.7); 
+      if (Math.sqrt(dx * dx + dy * dy) < 5) return;
+
+      spawnRipple(e.clientX, e.clientY, 0.65);
       lastRipplePos.current.set(e.clientX, e.clientY);
       lastRippleTime.current = time;
     };
 
     const handlePointerLeave = () => {
-      targetMouseAlpha.current = 0.0; // Smoothly fade out the dent
+      targetMouseAlpha.current = 0.0;
     };
 
     const handlePointerDown = (e: PointerEvent) => {
-      spawnRipple(e.clientX, e.clientY, 3.0);
+      spawnRipple(e.clientX, e.clientY, 2.4);
     };
 
-    // Attach to window for robust global tracking (won't get blocked by z-index overlays)
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerleave', handlePointerLeave);
     window.addEventListener('pointerdown', handlePointerDown);
@@ -99,21 +93,26 @@ const WaterQuad = () => {
     };
   }, [size, spawnRipple]);
 
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (materialRef.current) {
-      const time = state.clock.getElapsedTime();
-      materialRef.current.uniforms.uTime.value = time;
-      
-      // Smoothly interpolate the mouse alpha to avoid instant popping
-      const currentAlpha = materialRef.current.uniforms.uMouseAlpha.value;
-      materialRef.current.uniforms.uMouseAlpha.value = THREE.MathUtils.lerp(currentAlpha, targetMouseAlpha.current, 0.1);
+      materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
 
-      if (materialRef.current.uniforms.uImageLoaded.value > 0.0 && materialRef.current.uniforms.uImageReveal.value < 1.0) {
-        materialRef.current.uniforms.uImageReveal.value = Math.min(
-          1.0,
-          materialRef.current.uniforms.uImageReveal.value + delta / 1.2
-        );
+      // Damped mouse interpolation for silky 144fps cursor ripples
+      const uMouse = materialRef.current.uniforms.uMouse.value as THREE.Vector2;
+      if (targetMouse.current.x > -500) {
+        if (uMouse.x < -500) {
+          uMouse.copy(targetMouse.current);
+        } else {
+          uMouse.lerp(targetMouse.current, 0.14);
+        }
       }
+
+      const currentAlpha = materialRef.current.uniforms.uMouseAlpha.value;
+      materialRef.current.uniforms.uMouseAlpha.value = THREE.MathUtils.lerp(
+        currentAlpha,
+        targetMouseAlpha.current,
+        0.1
+      );
     }
   });
 
@@ -147,12 +146,13 @@ export const WaterCanvas: React.FC = () => {
   }, []);
 
   return (
-    <div 
-      aria-hidden="true" 
+    <div
+      aria-hidden="true"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 0,
+        backgroundColor: '#050506',
         touchAction: 'pan-y',
         pointerEvents: 'none'
       }}
@@ -162,7 +162,7 @@ export const WaterCanvas: React.FC = () => {
         camera={{ position: [0, 0, 1], zoom: 1 }}
         gl={{ antialias: false, toneMapping: THREE.NoToneMapping }}
         dpr={Math.min(window.devicePixelRatio, 1.5)}
-        frameloop={motion ? "always" : "demand"}
+        frameloop={motion ? 'always' : 'demand'}
       >
         <WaterQuad />
       </Canvas>

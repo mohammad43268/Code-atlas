@@ -1,9 +1,78 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
+import ScrollTrigger from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
+interface PhaseSpec {
+  index: string;
+  tag: string;
+  title: string;
+  desc: string;
+  metric: string;
+}
+
+const PHASES: PhaseSpec[] = [
+  {
+    index: '01',
+    tag: 'AST_INGESTION',
+    title: 'Recursive AST Ingestion',
+    desc: 'Connect any public or private GitHub repository. CodeAtlas streams the Git object tree and compiles language ASTs, extracting symbols, imports, and interface boundaries.',
+    metric: 'TREE-SITTER // <400MS PARSE'
+  },
+  {
+    index: '02',
+    tag: 'FORCE_TOPOLOGY',
+    title: 'Force-Directed Topology',
+    desc: 'Files and modules transform into graph vertices with repulsive physics and weighted import edges. Architectural silos and cyclic dependencies immediately illuminate.',
+    metric: 'TOPOLOGY_SOLVER // 60K+ NODES'
+  },
+  {
+    index: '03',
+    tag: 'SPATIAL_GROUNDING',
+    title: 'Spatial Grounding & Copilot',
+    desc: 'Fly through the codebase with damped orbital controls. Pin any node into the grounded reasoning copilot, receiving citations anchored back to physical 3D coordinates.',
+    metric: 'WEBGL INSTANCED // ZERO DRIFT'
+  }
+];
+
+interface MorphNode {
+  id: string;
+  label: string;
+  color: string;
+  // Coordinates inside 800x500 SVG viewBox per phase
+  p0: [number, number];
+  p1: [number, number];
+  p2: [number, number];
+}
+
+const MORPH_NODES: MorphNode[] = [
+  { id: 'root', label: 'repo/root', color: '#F4F4F6', p0: [400, 70], p1: [400, 250], p2: [380, 230] },
+  { id: 'src', label: 'src/', color: '#38BDF8', p0: [240, 175], p1: [230, 170], p2: [230, 155] },
+  { id: 'api', label: 'api/', color: '#818CF8', p0: [560, 175], p1: [565, 185], p2: [545, 175] },
+  { id: 'scene', label: 'Scene.tsx', color: '#38BDF8', p0: [140, 300], p1: [165, 315], p2: [185, 310] },
+  { id: 'hooks', label: 'useOrchestrator.ts', color: '#F4F4F6', p0: [310, 300], p1: [330, 385], p2: [365, 375] },
+  { id: 'server', label: 'streamRouter.js', color: '#818CF8', p0: [490, 300], p1: [600, 340], p2: [575, 330] },
+  { id: 'ast', label: 'githubTreeService.ts', color: '#F59E0B', p0: [660, 300], p1: [480, 110], p2: [455, 105] },
+  { id: 'copilot', label: 'COPILOT_PIN', color: '#10B981', p0: [400, 415], p1: [275, 105], p2: [240, 375] }
+];
+
+const EDGES: Array<[number, number]> = [
+  [0, 1],
+  [0, 2],
+  [1, 3],
+  [1, 4],
+  [2, 5],
+  [2, 6],
+  [4, 7],
+  [3, 4],
+  [5, 6]
+];
 
 export const DataFlow: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
-  const packetRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const [activePhase, setActivePhase] = useState<number>(0);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -11,348 +80,367 @@ export const DataFlow: React.FC = () => {
     if (prefersReducedMotion) return;
 
     const ctx = gsap.context(() => {
-      const panels = gsap.utils.toArray('.horizontal-panel');
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          pin: true,
-          scrub: 1,
-          snap: 1 / (panels.length - 1),
-          end: () => '+=' + containerRef.current!.offsetWidth * (panels.length - 1)
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: 'top top',
+        end: '+=200%',
+        pin: true,
+        scrub: 1,
+        onUpdate: (self) => {
+          const p = self.progress;
+          if (progressBarRef.current) {
+            progressBarRef.current.style.height = `${Math.min(100, Math.max(8, p * 100))}%`;
+          }
+          if (p < 0.34) {
+            setActivePhase(0);
+          } else if (p < 0.68) {
+            setActivePhase(1);
+          } else {
+            setActivePhase(2);
+          }
         }
       });
-
-      tl.to(
-        panels,
-        {
-          xPercent: -100 * (panels.length - 1),
-          ease: 'none'
-        },
-        0
-      );
-
-      if (packetRef.current) {
-        tl.to(
-          packetRef.current,
-          {
-            x: '200vw',
-            ease: 'none'
-          },
-          0
-        );
-      }
     }, containerRef);
 
     return () => ctx.revert();
   }, []);
 
+  const getCoord = (node: MorphNode): [number, number] => {
+    if (activePhase === 0) return node.p0;
+    if (activePhase === 1) return node.p1;
+    return node.p2;
+  };
+
+  const currentPhase = PHASES[activePhase] ?? PHASES[0];
+
   return (
     <section
       ref={containerRef}
-      aria-labelledby="data-flow-heading"
+      id="data-flow-heading"
+      aria-label="Pipeline Scrollytelling"
       style={{
-        overflow: 'hidden',
         width: '100%',
-        height: '100vh',
-        backgroundColor: '#040507',
+        minHeight: '100vh',
+        paddingTop: '112px',
+        paddingBottom: '64px',
+        paddingLeft: 'clamp(16px, 4vw, 40px)',
+        paddingRight: 'clamp(16px, 4vw, 40px)',
+        backgroundColor: '#050506',
         position: 'relative',
-        borderTop: '1px solid var(--border-subtle)',
-        borderBottom: '1px solid var(--border-subtle)'
+        display: 'flex',
+        alignItems: 'center',
+        borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+        overflow: 'hidden'
       }}
     >
+      {/* Architectural 64px Background Grid with Radial Fade Mask */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage:
+            'linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
+          maskImage: 'radial-gradient(circle at 55% 50%, black 30%, transparent 82%)',
+          WebkitMaskImage: 'radial-gradient(circle at 55% 50%, black 30%, transparent 82%)',
+          pointerEvents: 'none',
+          zIndex: 0
+        }}
+      />
+
       <div
         style={{
-          display: 'flex',
-          width: '300vw',
-          height: '100%',
-          willChange: 'transform',
-          position: 'relative'
+          position: 'relative',
+          zIndex: 2,
+          width: '100%',
+          maxWidth: '1440px',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
+          gap: 'clamp(24px, 4vw, 48px)',
+          alignItems: 'center'
         }}
       >
-        {/* Laser Data Bus Connection Track */}
+        {/* Left Column: Phase Index & Vertical Scroll Progress */}
         <div
           style={{
-            position: 'absolute',
-            top: '64%',
-            left: '50vw',
-            width: '200vw',
-            height: '1px',
-            backgroundColor: 'rgba(0, 255, 204, 0.25)',
-            boxShadow: '0 0 12px rgba(0, 255, 204, 0.4)',
-            zIndex: 1
-          }}
-        />
-
-        {/* Traveling Cyan Photon Packet */}
-        <div
-          ref={packetRef}
-          style={{
-            position: 'absolute',
-            top: '64%',
-            left: '50vw',
-            width: '18px',
-            height: '18px',
-            backgroundColor: '#050608',
-            border: '1px solid var(--accent-highlight)',
-            boxShadow: '0 0 16px rgba(0, 255, 204, 0.8)',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 3,
+            gridColumn: 'span 5',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
+            gap: '24px',
+            position: 'relative'
           }}
         >
+          {/* Vertical Progress Axis */}
           <div
             style={{
-              width: '6px',
-              height: '6px',
-              backgroundColor: 'var(--accent-highlight)',
-              animation: 'cyanPulse 1s infinite ease-in-out'
-            }}
-          />
-        </div>
-
-        {/* Panel 1: Ingestion */}
-        <div
-          className="horizontal-panel"
-          style={{
-            width: '100vw',
-            height: '100%',
-            position: 'relative',
-            padding: 'clamp(24px, 5vw, 64px)',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="technical-meta">[PIPELINE 01/03 // INGESTION]</span>
-            <span className="technical-badge technical-badge-cyan">PARSER: TREE-SITTER</span>
-          </div>
-
-          <div style={{ maxWidth: '640px', zIndex: 10 }}>
-            <h2
-              id="data-flow-heading"
-              style={{
-                fontFamily: 'Comvota, sans-serif',
-                fontSize: 'clamp(32px, 4.5vw, 72px)',
-                lineHeight: 0.95,
-                color: 'var(--ink)',
-                textTransform: 'uppercase',
-                margin: '0 0 20px 0'
-              }}
-            >
-              Phase 1: Recursive AST Ingestion
-            </h2>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 'clamp(15px, 1.3vw, 19px)',
-                lineHeight: 1.6,
-                color: 'var(--text-secondary)',
-                margin: 0
-              }}
-            >
-              Connect any public or private GitHub repository. CodeAtlas streams the Git object tree and builds language ASTs, extracting symbols, imports, and interface boundaries.
-            </p>
-          </div>
-
-          {/* Node Box */}
-          <div
-            className="tactile-panel"
-            style={{
-              position: 'absolute',
-              top: '64%',
-              left: '50vw',
-              transform: 'translate(-50%, -50%)',
-              width: '190px',
-              height: '190px',
-              backgroundColor: 'rgba(8, 10, 14, 0.95)',
-              border: '1px solid var(--accent-highlight)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2,
-              boxShadow: '0 0 32px rgba(0, 255, 204, 0.15)'
+              width: '2px',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              position: 'relative',
+              flexShrink: 0,
+              borderRadius: '2px',
+              overflow: 'hidden'
             }}
           >
-            <i className="fa-brands fa-github" style={{ fontSize: '2.5rem', marginBottom: '12px', color: 'var(--ink)' }} />
-            <span className="technical-badge" style={{ borderColor: 'var(--accent-highlight)', color: 'var(--accent-highlight)' }}>
-              AST_EXTRACT
-            </span>
-            <span className="technical-meta" style={{ fontSize: '9px', marginTop: '6px' }}>
-              RECURSIVE SCAN
-            </span>
+            <div
+              ref={progressBarRef}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${((activePhase + 1) / 3) * 100}%`,
+                background: 'linear-gradient(180deg, #F8FAFC 0%, #38BDF8 100%)',
+                boxShadow: '0 0 12px rgba(56, 189, 248, 0.45)',
+                transition: 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+            />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="technical-meta">INDEX: 01_SOURCE</span>
-            <span className="technical-meta">LATENCY: &lt; 400MS</span>
+          {/* 3-Stage Editorial Phase Stack */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="technical-meta">[00 // EXECUTION PIPELINE]</span>
+              <span className="technical-badge technical-badge-ice" style={{ borderRadius: '9999px' }}>
+                PHASE {currentPhase.index} / 03
+              </span>
+            </div>
+
+            {PHASES.map((phase, idx) => {
+              const isActive = idx === activePhase;
+              return (
+                <div
+                  key={phase.index}
+                  onClick={() => setActivePhase(idx)}
+                  style={{
+                    cursor: 'pointer',
+                    opacity: isActive ? 1 : 0.32,
+                    filter: isActive ? 'blur(0px)' : 'blur(0.8px)',
+                    transform: isActive ? 'translateX(4px)' : 'translateX(0px)',
+                    transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                    borderLeft: isActive
+                      ? '2px solid rgba(255, 255, 255, 0.25)'
+                      : '2px solid transparent',
+                    paddingLeft: '16px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '6px' }}>
+                    <span
+                      style={{
+                        fontFamily: "'Inter Tight', sans-serif",
+                        fontSize: 'clamp(1.75rem, 2.5vw, 2.5rem)',
+                        fontWeight: 800,
+                        letterSpacing: '-0.04em',
+                        color: isActive ? '#F4F4F6' : '#646A77',
+                        lineHeight: 1
+                      }}
+                    >
+                      {phase.index}
+                    </span>
+                    <span className="technical-meta" style={{ color: isActive ? '#38BDF8' : '#646A77' }}>
+                      {phase.tag}
+                    </span>
+                  </div>
+
+                  <h3
+                    style={{
+                      fontFamily: "'Inter Tight', sans-serif",
+                      fontSize: 'clamp(1.15rem, 1.5vw, 1.5rem)',
+                      fontWeight: 600,
+                      letterSpacing: '-0.02em',
+                      color: '#F4F4F6',
+                      margin: '0 0 6px 0'
+                    }}
+                  >
+                    {phase.title}
+                  </h3>
+
+                  {isActive && (
+                    <p
+                      style={{
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '14px',
+                        lineHeight: 1.6,
+                        color: '#9499A6',
+                        margin: 0
+                      }}
+                    >
+                      {phase.desc}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Panel 2: Graph Mapping */}
+        {/* Right Column: Interactive Glassmorphic Viewport Frame (16/10) */}
         <div
-          className="horizontal-panel"
           style={{
-            width: '100vw',
-            height: '100%',
-            position: 'relative',
-            padding: 'clamp(24px, 5vw, 64px)',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            borderLeft: '1px solid var(--border-subtle)'
+            gridColumn: 'span 7',
+            width: '100%'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="technical-meta">[PIPELINE 02/03 // TOPOLOGY]</span>
-            <span className="technical-badge technical-badge-cyan">GRAPH: FORCE-DIRECTED</span>
-          </div>
-
-          <div style={{ maxWidth: '640px', zIndex: 10 }}>
-            <h2
-              style={{
-                fontFamily: 'Comvota, sans-serif',
-                fontSize: 'clamp(32px, 4.5vw, 72px)',
-                lineHeight: 0.95,
-                color: 'var(--ink)',
-                textTransform: 'uppercase',
-                margin: '0 0 20px 0'
-              }}
-            >
-              Phase 2: Force-Directed Topology
-            </h2>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 'clamp(15px, 1.3vw, 19px)',
-                lineHeight: 1.6,
-                color: 'var(--text-secondary)',
-                margin: 0
-              }}
-            >
-              Files and modules are transformed into graph vertices with repulsive physics and weighted import edges. Architectural silos and cyclic dependencies become immediately visible.
-            </p>
-          </div>
-
-          {/* Node Box */}
           <div
-            className="tactile-panel"
             style={{
-              position: 'absolute',
-              top: '64%',
-              left: '50vw',
-              transform: 'translate(-50%, -50%)',
-              width: '190px',
-              height: '190px',
-              backgroundColor: 'rgba(8, 10, 14, 0.95)',
-              border: '1px solid var(--accent-highlight)',
+              width: '100%',
+              aspectRatio: '16 / 10',
+              backgroundColor: 'rgba(14, 15, 18, 0.65)',
+              backdropFilter: 'blur(20px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2,
-              boxShadow: '0 0 32px rgba(0, 255, 204, 0.15)'
+              overflow: 'hidden',
+              position: 'relative'
             }}
           >
-            <i className="fa-solid fa-diagram-project" style={{ fontSize: '2.5rem', marginBottom: '12px', color: 'var(--accent-highlight)' }} />
-            <span className="technical-badge" style={{ borderColor: 'var(--accent-highlight)', color: 'var(--accent-highlight)' }}>
-              GRAPH_BUILD
-            </span>
-            <span className="technical-meta" style={{ fontSize: '9px', marginTop: '6px' }}>
-              TOPOLOGY_SOLVER
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="technical-meta">INDEX: 02_TOPOLOGY</span>
-            <span className="technical-meta">NODES: 60,000+</span>
-          </div>
-        </div>
-
-        {/* Panel 3: Spatial Cartography */}
-        <div
-          className="horizontal-panel"
-          style={{
-            width: '100vw',
-            height: '100%',
-            position: 'relative',
-            padding: 'clamp(24px, 5vw, 64px)',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            borderLeft: '1px solid var(--border-subtle)'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="technical-meta">[PIPELINE 03/03 // ORCHESTRATION]</span>
-            <span className="technical-badge technical-badge-cyan">WEBGL: INSTANCED 120FPS</span>
-          </div>
-
-          <div style={{ maxWidth: '640px', zIndex: 10 }}>
-            <h2
+            {/* Viewport Top Chrome Strip */}
+            <div
               style={{
-                fontFamily: 'Comvota, sans-serif',
-                fontSize: 'clamp(32px, 4.5vw, 72px)',
-                lineHeight: 0.95,
-                color: 'var(--ink)',
-                textTransform: 'uppercase',
-                margin: '0 0 20px 0'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 18px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+                backgroundColor: 'rgba(8, 9, 11, 0.8)'
               }}
             >
-              Phase 3: Spatial Cartography & Copilot
-            </h2>
-            <p
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: 'clamp(15px, 1.3vw, 19px)',
-                lineHeight: 1.6,
-                color: 'var(--text-secondary)',
-                margin: 0
-              }}
-            >
-              Fly through the codebase with damped camera flight controls. Pin any node into the grounded reasoning copilot, receiving citations that visually anchor back into physical 3D nodes.
-            </p>
-          </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="emerald-dot" />
+                <span className="technical-meta" style={{ color: '#F4F4F6' }}>
+                  VIEWPORT // {currentPhase.tag}
+                </span>
+              </div>
+              <span className="technical-meta" style={{ color: '#38BDF8' }}>
+                {currentPhase.metric}
+              </span>
+            </div>
 
-          {/* Node Box */}
-          <div
-            className="tactile-panel"
-            style={{
-              position: 'absolute',
-              top: '64%',
-              left: '50vw',
-              transform: 'translate(-50%, -50%)',
-              width: '190px',
-              height: '190px',
-              backgroundColor: 'rgba(8, 10, 14, 0.95)',
-              border: '1px solid var(--accent-highlight)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2,
-              boxShadow: '0 0 32px rgba(0, 255, 204, 0.15)'
-            }}
-          >
-            <i className="fa-solid fa-cube" style={{ fontSize: '2.5rem', marginBottom: '12px', color: 'var(--ink)' }} />
-            <span className="technical-badge" style={{ borderColor: 'var(--accent-highlight)', color: 'var(--accent-highlight)' }}>
-              SPATIAL_MATRIX
-            </span>
-            <span className="technical-meta" style={{ fontSize: '9px', marginTop: '6px' }}>
-              ORCHESTRATOR COPILOT
-            </span>
-          </div>
+            {/* Dynamic Morphing SVG Node-Graph */}
+            <div style={{ flex: 1, position: 'relative', width: '100%', height: '100%' }}>
+              <svg
+                viewBox="0 0 800 460"
+                style={{ width: '100%', height: '100%', display: 'block' }}
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.24" />
+                    <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="technical-meta">INDEX: 03_RENDER</span>
-            <span className="technical-meta">OUTPUT: 3D SPACE</span>
+                {/* Phase-Adaptive Orbital Halo when in Topology or Spatial phase */}
+                <circle
+                  cx="400"
+                  cy="240"
+                  r={activePhase === 0 ? 0 : activePhase === 1 ? 150 : 185}
+                  fill="none"
+                  stroke="rgba(255, 255, 255, 0.06)"
+                  strokeDasharray="4 6"
+                  style={{ transition: 'all 0.85s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                />
+
+                {/* Smooth Bezier Edges connecting morphing nodes */}
+                {EDGES.map(([aIdx, bIdx], idx) => {
+                  const nA = MORPH_NODES[aIdx];
+                  const nB = MORPH_NODES[bIdx];
+                  if (!nA || !nB) return null;
+                  const [x1, y1] = getCoord(nA);
+                  const [x2, y2] = getCoord(nB);
+                  const mx = (x1 + x2) / 2;
+                  const my = (y1 + y2) / 2 - (activePhase === 2 ? 26 : 0);
+                  const pathD = `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`;
+
+                  return (
+                    <path
+                      key={idx}
+                      d={pathD}
+                      fill="none"
+                      stroke={activePhase === 2 && idx === 6 ? '#10B981' : 'rgba(255, 255, 255, 0.16)'}
+                      strokeWidth={activePhase === 2 && idx === 6 ? 1.8 : 1}
+                      style={{ transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                    />
+                  );
+                })}
+
+                {/* Morphing Vertices */}
+                {MORPH_NODES.map((node) => {
+                  const [cx, cy] = getCoord(node);
+                  const isHighlighted =
+                    (activePhase === 0 && node.id === 'root') ||
+                    (activePhase === 1 && (node.id === 'src' || node.id === 'api')) ||
+                    (activePhase === 2 && (node.id === 'copilot' || node.id === 'scene'));
+
+                  return (
+                    <g
+                      key={node.id}
+                      style={{
+                        transform: `translate(${cx}px, ${cy}px)`,
+                        transition: 'transform 0.85s cubic-bezier(0.16, 1, 0.3, 1)'
+                      }}
+                    >
+                      {isHighlighted && <circle cx="0" cy="0" r="34" fill="url(#nodeGlow)" />}
+                      <circle
+                        cx="0"
+                        cy="0"
+                        r={isHighlighted ? 8 : 5.5}
+                        fill="#050506"
+                        stroke={node.color}
+                        strokeWidth={isHighlighted ? 2 : 1.5}
+                      />
+                      <rect
+                        x="-58"
+                        y="14"
+                        width="116"
+                        height="20"
+                        rx="4"
+                        fill="rgba(5, 5, 6, 0.82)"
+                        stroke="rgba(255, 255, 255, 0.12)"
+                        strokeWidth="1"
+                      />
+                      <text
+                        x="0"
+                        y="27"
+                        textAnchor="middle"
+                        fill={isHighlighted ? '#F4F4F6' : '#9499A6'}
+                        fontSize="10"
+                        fontFamily="'JetBrains Mono', monospace"
+                      >
+                        {node.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* Bottom Overlay Status Chip */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '14px',
+                  left: '16px',
+                  right: '16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  pointerEvents: 'none'
+                }}
+              >
+                <span className="technical-badge" style={{ borderRadius: '6px' }}>
+                  {activePhase === 0 && 'MODE: AST_SYNTAX_TREE'}
+                  {activePhase === 1 && 'MODE: FORCE_DIRECTED_EULER'}
+                  {activePhase === 2 && 'MODE: BI_DIRECTIONAL_PIN'}
+                </span>
+                <span className="technical-meta">
+                  {activePhase === 2 ? 'CITATION LOCK: ACTIVE' : 'NODES: 8 // DEPTH: 3'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
